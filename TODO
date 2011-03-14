@@ -1,0 +1,18 @@
+TODO:
+
+* Complete OWL2RL support
+* Create an RDFS + OWL2RL engine, or maybe a generic composite engine
+* Create an OWL Extras engine
+* Possibly create a log:implies engine?
+
+I don't plan on writing the following myself but would accept patches for:
+
+* Manchester syntax parser
+* OWL/XML parser
+* OwlFn, Manchester, OWL/XML serialisers
+
+Ideas for separate packages:
+
+* OWL API
+* Wrappers for external reasoning tools
+
