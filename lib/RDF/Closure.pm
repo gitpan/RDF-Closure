@@ -15,7 +15,7 @@ use base qw[RDF::Trine];
 use constant FLT_NONRDF => 1;
 use constant FLT_BORING => 2;
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 our @EXPORT_OK;
 BEGIN

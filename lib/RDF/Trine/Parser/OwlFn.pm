@@ -20,7 +20,7 @@ use constant ANNOTATION_ANNOTATION => 4;
 
 BEGIN
 {
-	$VERSION = '0.000_01';
+	$VERSION = '0.000_02';
 	
 	# Perl package name
 	my $class = __PACKAGE__;

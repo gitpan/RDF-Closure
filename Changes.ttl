@@ -28,6 +28,18 @@ my:v_0-000_01
 	:file-release   <http://backpan.cpan.org/authors/id/T/TO/TOBYINK/RDF-Closure-0.000_01.tar.gz> ;
 	rdfs:label      "pi-day preview"@en .
 
+my:v_0-000_02
+
+	a               :Version ;
+	dc:issued       "2011-03-27"^^xsd:date ;
+	:revision       "0.000_02"^^xsd:string ;
+	:file-release   <http://backpan.cpan.org/authors/id/T/TO/TOBYINK/RDF-Closure-0.000_02.tar.gz> ;
+	rdfs:label      "pre-hackathon release"@en ;
+	dcs:changeset [
+		dcs:versus my:v_0-000_01 ;
+		dcs:item   [ rdfs:label "Implemented some more of OWL2 RL."@en ]
+		] .
+
 #############################################################
 
 my:project
@@ -47,7 +59,7 @@ my:project
 	:tester         toby:i ;
 	:created        "2011-02-23"^^xsd:date ;
 	:license        <http://dev.perl.org/licenses/> ;
-	:release        my:v_0-000_01 .
+	:release        my:v_0-000_01 , my:v_0-000_02 .
 
 #############################################################
 

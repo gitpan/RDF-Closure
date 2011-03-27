@@ -7,13 +7,14 @@ use Data::UUID;
 use Error qw[:try];
 use RDF::Trine;
 use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
+use Scalar::Util qw[blessed];
 
 use constant {
 	TRUE    => 1,
 	FALSE   => 0,
 	};
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 our $debugGlobal = FALSE;
 
@@ -92,7 +93,13 @@ sub graph
 
 sub add_error
 {
-	my ($self, $message) = @_;
+	my ($self, $message, @params) = @_;
+	
+	@params = map {
+		(blessed($_) and $_->isa('RDF::Trine::Node')) ? $_->as_ntriples : $_;
+		} @params;
+	$message = sprintf($message, @params)
+		if @params;
 	
 	printf("** %s\n", $message)
 		if $self->{_debug};

@@ -2,7 +2,7 @@ package RDF::Closure::DatatypeTuple;
 
 use overload '""' => to_string;
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 sub new
 {

@@ -6,7 +6,7 @@ use common::sense;
 use Error qw[:try];
 use RDF::Trine;
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 sub name
 {

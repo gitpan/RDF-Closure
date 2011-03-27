@@ -19,7 +19,7 @@ use XML::LibXML;
 
 use base qw[Exporter];
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 our @EXPORT = qw[];
 our @EXPORT_OK = qw[

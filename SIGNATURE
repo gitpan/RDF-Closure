@@ -14,15 +14,15 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 162ab3241b757f1c52d152f4088cfc6428af525f Changes
-SHA1 497cac026d7b0614e232146d795717920bce5409 Changes.ttl
-SHA1 40c3fffee543d6b2802c2d13f62a3dfbc55e9600 Changes.xml
+SHA1 3e4aeb1bf93bb602aae77e4a576b0a85163ffc82 Changes
+SHA1 fbb8e6fbf14e38915ed854f8d29eebf8bfb3a8c2 Changes.ttl
+SHA1 e8c92c058860f601e25bce3cab4ccc0164079da4 Changes.xml
 SHA1 6a8ca3b233eb014ff17b6495a384c1d157d5d8e3 MANIFEST
-SHA1 967ddef191ab524f3a9cb9e5e04fd302b037083e MANIFEST.SKIP
-SHA1 2e80438df2fc61ea68724366b87ab2fa675f6782 META.yml
+SHA1 3b21e083078c9f9b5b375c78de33339bbee77258 MANIFEST.SKIP
+SHA1 46b51e0c21086103a30ffce13806323a7cee7cdd META.yml
 SHA1 55d3a5965bf06c62f2f1d8d27aa078bf3f2c812f Makefile.PL
 SHA1 60592cace1398d36e035ab862c989ffc0a07b273 README
-SHA1 65ae399975d0ac08f7223d65fd13e91270400d69 TODO
+SHA1 6381ee8118c02fba4e2a2ce2d7e9ae146a0d2171 TODO
 SHA1 20c73697e1713638140c719d8eaa19a275ed43a5 inc/Module/AutoInstall.pm
 SHA1 7305dbe2904416e28decb05396988a5d51d578be inc/Module/Install.pm
 SHA1 ca13d9875e1249f6e84f7070be8152c34837955e inc/Module/Install/AutoInstall.pm
@@ -36,27 +36,27 @@ SHA1 026cc0551a0ad399d195e395b46bdf842e115192 inc/Module/Install/Metadata.pm
 SHA1 a615bb050ca0b2d79bfa0224addcb83019a53b09 inc/Module/Install/ReadmeFromPod.pm
 SHA1 5457015ea5a50e93465bf2dafa29feebd547f85b inc/Module/Install/Win32.pm
 SHA1 051e7fa8063908befa3440508d0584a2497b97db inc/Module/Install/WriteAll.pm
-SHA1 da3982be14244106317c14976d2a26fc7de6d3a1 lib/RDF/Closure.pm
-SHA1 9675a21592cc58b5dfaf0f01fe5478128be27558 lib/RDF/Closure/AxiomaticTriples.pm
-SHA1 f3c59f50fee8cbb7c24c01890d98522f0af91488 lib/RDF/Closure/DatatypeHandling.pm
-SHA1 c3b26faeda7cdcf8b3520e28b1cca0821cc29fe2 lib/RDF/Closure/DatatypeTuple.pm
-SHA1 99bbbf898e293f7b1add08ae282c9788f35c43ae lib/RDF/Closure/Engine.pm
-SHA1 099d510881db0a0c5701243f01c7ce1ef1cebe9d lib/RDF/Closure/Engine/Core.pm
-SHA1 b074e27760b191dcf1ad5647f31cb6def8e86785 lib/RDF/Closure/Engine/OWL2RL.pm
-SHA1 32af396a832eb86f460d52f453552335e9e8631a lib/RDF/Closure/Engine/RDFS.pm
-SHA1 aed5ea669922bcf33a978f20eb06bd9d646c3305 lib/RDF/Closure/Model.pm
-SHA1 27929ced4e31001605d153001332d4608f88a425 lib/RDF/Closure/Rule/Core.pm
-SHA1 6de6d801e3646855863a67d77c19b29692864929 lib/RDF/Closure/Rule/Programmatic.pm
-SHA1 03c6626f2309ef63101e6dd5dcdafba1e667d922 lib/RDF/Closure/Rule/StatementMatcher.pm
-SHA1 d15ba87d960ebb3c2e7097ed9bf2e637e3b0d462 lib/RDF/Closure/XsdDatatypes.pm
-SHA1 c9574df620fea3b71207953014817d304a49240f lib/RDF/Trine/Parser/OwlFn.pm
+SHA1 2473efa9c0679ffac0af9c87657b0d30edbc3762 lib/RDF/Closure.pm
+SHA1 b8128057f42018899777f472e4f63a0e679633c7 lib/RDF/Closure/AxiomaticTriples.pm
+SHA1 8bf8c311fd49d9db70e49f7f741b48c9c9cc23b8 lib/RDF/Closure/DatatypeHandling.pm
+SHA1 fc49c351b419689ada4774778768e47508fee9ba lib/RDF/Closure/DatatypeTuple.pm
+SHA1 806768fda7ba929c7ed6e72510c10701a5c91cef lib/RDF/Closure/Engine.pm
+SHA1 45fe67bfa63d73afff540084480704e127afb5c8 lib/RDF/Closure/Engine/Core.pm
+SHA1 1dce459fa88215b3765654b3aa40603eff0de7e2 lib/RDF/Closure/Engine/OWL2RL.pm
+SHA1 8af51eb7d4aececedfdd2b53eeae78564b14d56d lib/RDF/Closure/Engine/RDFS.pm
+SHA1 2d0b34a1c58d2ad4012b4c23215a44b848ccb667 lib/RDF/Closure/Model.pm
+SHA1 ec12c70989d5fd843e5bfc6434e992caa22ae269 lib/RDF/Closure/Rule/Core.pm
+SHA1 c7447ee5345b745c79b0d31725bcc750afd3a3a3 lib/RDF/Closure/Rule/Programmatic.pm
+SHA1 5fc2a87cfd22aafdb33a3b35b9c617c34eaddae8 lib/RDF/Closure/Rule/StatementMatcher.pm
+SHA1 1a1ad9bfd058df761c59c37c8646fca90c8bbf3e lib/RDF/Closure/XsdDatatypes.pm
+SHA1 529e6f0ca34fc345d5e0c5d7d4a218a7290ddd87 lib/RDF/Trine/Parser/OwlFn.pm
 SHA1 ff69d76eadb6cb619e7c6114e978b2dfb9fd49df lib/RDF/Trine/Parser/OwlFn/Compiled.pm
-SHA1 325acb4c460dea0e7bf355dc5274711157811309 lib/RDF/Trine/Parser/OwlFn/Grammar.pm
+SHA1 8425d39d1384016ac2c7e747d121870b30131817 lib/RDF/Trine/Parser/OwlFn/Grammar.pm
 SHA1 6e7a7677f8d4e6bd2bb1765ffc81aa3fbebe2da4 t/01basic.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iEYEARECAAYFAk1+hRAACgkQzr+BKGoqfTnP/ACgqQrb+kBLbKQhpavbMgY06gBI
-MTIAnjk8fs9iNhW7hW/AcAsCI7glvrv2
-=yEA/
+iEYEARECAAYFAk2PxJEACgkQzr+BKGoqfTluCgCfXLhm9/ASxvPf0iT2MHS4EE2L
+q5kAn1b4Ybjg6Y4EM601pR9mo+pJiPu/
+=QE1n
 -----END PGP SIGNATURE-----

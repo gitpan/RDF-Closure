@@ -10,7 +10,7 @@ use Scalar::Util qw[];
 
 use base qw[RDF::Trine::Model];
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 BEGIN
 {

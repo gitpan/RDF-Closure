@@ -30,7 +30,7 @@ use namespace::clean;
 
 use base qw[RDF::Closure::Engine::Core];
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_02';
 
 our @OneTimeRules = (
 
@@ -138,7 +138,7 @@ our @OneTimeRules = (
 				$cl->graph->get_statements(undef, $RDF->type, undef)->each(sub {
 					my $st = shift;
 					my ($s, $p, $o) = ($st->subject, $st->predicate, $st->object);
-					if (grep { $_->uri eq $o->uri; } @$OWL_RL_Datatypes)
+					if (grep { $_->equal($o); } @$OWL_RL_Datatypes)
 					{
 						_add_to_used_datatypes($o);
 						_add_to_explicit($s, $o)
@@ -306,7 +306,7 @@ our @Rules = (
 				my ($cl, $st, $rule) = @_; my ($prop) = $st->nodes;
 				$cl->graph->get_statements(undef, $prop, undef)->each(sub{
 					my $st = shift;
-					$cl->add_error(sprintf("Irreflexive property %s used reflexively on %s", $st->predicate->as_ntriples, $st->subject->as_ntriples))
+					$cl->add_error("Irreflexive property %s used reflexively on %s", $st->predicate, $st->subject)
 						if $st->subject->equal($st->object);
 				});
 			},
@@ -333,7 +333,7 @@ our @Rules = (
 				my ($cl, $st, $rule) = @_; my ($prop) = $st->nodes;
 				$cl->graph->get_statements(undef, $prop, undef)->each(sub{
 					my $st = shift;
-					$cl->add_error(sprintf("Asymmetric property %s used symmetrically on (%s,%s)", $st->predicate->as_ntriples, $st->subject->as_ntriples, $st->object->as_ntriples))
+					$cl->add_error("Asymmetric property %s used symmetrically on (%s,%s)", $st->predicate, $st->subject, $st->object)
 						if $cl->graph->count_statements($st->object, $st->predicate, $st->subject);
 				});
 			},
@@ -362,19 +362,19 @@ our @Rules = (
 		sub {
 				my ($cl, $st, $rule) = @_; my ($x) = $st->nodes;
 				$cl->graph->get_statements($x, $OWL->members, undef)->each(sub {
-					my @pis = $self->graph->get_list($_[0]->object);
+					my @pis = $cl->graph->get_list($_[0]->object);
 					for my $i (0 .. scalar(@pis)-1)
 					{
 						for my $j ($i+1 .. scalar(@pis)-1)
 						{
 							my $pi = $pis[$i];
-							my $pj = $pjs[$i];
+							my $pj = $pis[$j];
 							
-							$self->graph->get_statements(undef, $pi, undef)->each(sub {
+							$cl->graph->get_statements(undef, $pi, undef)->each(sub {
 								my ($x, undef, $y) = $_[0]->nodes;
-								if ($self->graph->count_statements($x, $pj, $y))
+								if ($cl->graph->count_statements($x, $pj, $y))
 								{
-									$self->add_error(sprintf("Disjoint properties in an 'AllDisjointProperties' are not really disjoint: %s %s %s and %s %s %s.", map {$_->as_ntriples} ($x,$pi,$y,$x,$pj,$y)));
+									$cl->add_error("Disjoint properties in an 'AllDisjointProperties' are not really disjoint: %s %s %s and %s %s %s.", $x, $pi, $y, $x, $pj, $y);
 								}
 							});
 						}						
@@ -432,7 +432,7 @@ our @Rules = (
 				my ($cl, $st, $rule) = @_; my ($prop1, undef, $prop2) = $st->nodes;
 				$cl->graph->get_statements(undef, $prop1, undef)->each(sub {
 					my $st = shift;
-					$cl->add_error(sprintf('Erronous usage of disjoint properties %s and %s on %s and %s', map {$_->as_ntriples} ($prop1, $prop2, $st->subject, $st->object)))
+					$cl->add_error('Erronous usage of disjoint properties %s and %s on %s and %s', $prop1, $prop2, $st->subject, $st->object)
 						if $cl->graph->count_statements($st->subject, $prop2, $st->object);
 				});
 			},
@@ -536,8 +536,7 @@ our @Rules = (
 					{
 						if ($cl->graph->count_statements($s, $p, $target))
 						{
-							$cl->add_error(sprintf('Negative (object) property assertion violated for: (%s %s %s .)',
-								$s->as_ntriples, $p->as_ntriples, $target->as_ntriples));
+							$cl->add_error('Negative (object) property assertion violated for: (%s %s %s .)', $s, $p, $target);
 						}
 					}
 				}
@@ -558,8 +557,7 @@ our @Rules = (
 					{
 						if ($cl->graph->count_statements($s, $p, $target))
 						{
-							$cl->add_error(sprintf('Negative (datatype) property assertion violated for: (%s %s %s .)',
-								$s->as_ntriples, $p->as_ntriples, $target->as_ntriples));
+							$cl->add_error('Negative (datatype) property assertion violated for: (%s %s %s .)', $s, $p, $target);
 						}
 					}
 				}
@@ -644,7 +642,7 @@ our @Rules = (
 		[undef, $OWL->sameAs, undef],
 		sub {
 				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
-				$cl->add_error(sprintf("'sameAs' and 'differentFrom' cannot be used on the same subject-object pair: (%s, %s)", $s->as_ntriples, $o->as_ntriples))
+				$cl->add_error("'sameAs' and 'differentFrom' cannot be used on the same subject-object pair: (%s, %s)", $s, $o)
 					if $cl->graph->count_statements($s, $OWL->differentFrom, $o)
 					|| $cl->graph->count_statements($o, $OWL->differentFrom, $s);
 			},
@@ -661,6 +659,363 @@ our @Rules = (
 		'eq-diff2, eq-diff3'
 		),
 
+	# Ivan doesn't seem to have this rule, but it's required by test cases.
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->differentFrom, undef],
+		sub {
+				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
+				$cl->store_triple($o, $p, $s);
+			},
+		'????'
+		),
+
+	# cls-nothing2
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $OWL->Nothing],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				$cl->add_error("%s is defined of type 'Nothing'", $st->subject);
+			},
+		'cls-nothing'
+		),
+
+	# cls-int1, cls-int2
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->intersectionOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c, undef, $x) = $st->nodes;
+				my @classes = $cl->graph->get_list($x);
+				return unless @classes;
+				# cls-int1
+				foreach my $y ($cl->graph->subjects($RDF->type, $classes[0]))
+				{
+					my $isInIntersection = TRUE;
+					unless ($cl->graph->count_statements($y, $RDF->type, $c)) # Ivan doesn't do this check
+					{
+						CI: foreach my $ci (@classes[1 .. scalar(@classes)-1])
+						{
+							unless ($cl->graph->count_statements($y, $RDF->type, $ci))
+							{
+								$isInIntersection = FALSE;
+								last CI;
+							}
+						}
+						if ($isInIntersection)
+						{
+							$cl->store_triple($y, $RDF->type, $c);
+						}
+					}
+				}
+				# cls-int2
+				foreach my $y ($cl->graph->subjects($RDF->type, $c))
+				{
+					$cl->store_triple($y, $RDF->type, $_) foreach @classes;
+				}
+			},
+		'cls-int1, cls-int2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->unionOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c, undef, $x) = $st->nodes;
+				my @classes = $cl->graph->get_list($x);
+				foreach my $cu (@classes)
+				{
+					$cl->graph->subjects($RDF->type, $cu)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $c);
+					});
+				}
+			},
+		'cls-uni'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->complementOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $c2) = $st->nodes;
+				$cl->graph->subjects($RDF->type, $c1)->each(sub{
+					$cl->add_error("Violation of complementarity for classes %s and %s on element %s", $c1, $c2, $_[0])
+						if $cl->graph->count_statements($_[0], $RDF->type, $c2);
+				});
+			},
+		'cls-comm'
+		),
+
+	# @@TODO
+	# cls-svf1 and cls-svf2
+	# cls-avf
+	# cls-hv1 and cls-hv2
+	# cls-maxc1 and cls-maxc1
+	# cls-maxqc1, cls-maxqc2, cls-maxqc3, cls-maxqc4
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->oneOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c, undef, $x) = $st->nodes;
+				my @indivs = $cl->graph->get_list($x);
+				foreach my $i (@indivs)
+				{
+					$cl->store_triple($i, $RDF->type, $c);
+				}
+			},
+		'cls-oo'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDFS->subClassOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $c2) = $st->nodes;
+				unless ($c1->equal($c2))
+				{
+					$cl->graph->subjects($RDF->type, $c1)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $c2);
+					});
+				}
+			},
+		'cax-sco'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->equivalentClass, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $c2) = $st->nodes;
+				$cl->store_triple($c2, $OWL->equivalentClass, $c1); # Toby added
+				$cl->store_triple($c1, $RDFS->subClassOf, $c2);
+				$cl->store_triple($c2, $RDFS->subClassOf, $c1);
+				unless ($c1->equal($c2))
+				{
+					$cl->graph->subjects($RDF->type, $c1)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $c2);
+					});
+					$cl->graph->subjects($RDF->type, $c2)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $c1);
+					});
+				}
+			},
+		'cax-eqc, cax-eqc1'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->disjointWith, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $c2) = $st->nodes;
+				$cl->graph->subjects($RDF->type, $c1)->each(sub {
+					$cl->add_error('Disjoint classes %s and %s have a common individual %s', $c1, $c2, $_[0])
+						if $cl->graph->count_statements($_[0], $RDF->type, $c2);
+				});
+			},
+		'cax-dw'
+		),
+
+	# @@TODO
+	# cax-adc
+	
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $OWL->Class],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c) = $st->nodes;
+				$cl->store_triple($c, $RDFS->subClassOf, $c);
+				$cl->store_triple($c, $OWL->equivalentClass, $c);
+				$cl->store_triple($c, $RDFS->subClassOf, $OWL->Thing);
+				$cl->store_triple($OWL->Nothing, $RDFS->subClassOf, $c);
+			},
+		'scm-cls'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDFS->subClassOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $c2) = $st->nodes;
+				$cl->graph->objects($c2, $RDFS->subClassOf)->each(sub {
+					my $c3 = $_[0];
+					if ($c1->equal($c3))
+					{
+						# scm-eqc2
+						$cl->store_triple($c1, $OWL->equivalentClass, $c3);
+					}
+					else
+					{
+						# scm-sco
+						$cl->store_triple($c1, $RDFS->subClassOf, $c3);
+					}
+					# Ivan could optimise his version better.
+				});
+			},
+		'scm-sco, scm-eqc2'
+		),
+	
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $OWL->ObjectProperty],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($pp) = $st->nodes;
+				$cl->store_triple($pp, $RDFS->subPropertyOf, $pp);
+				$cl->store_triple($pp, $OWL->equivalentProperty, $pp);
+			},
+		'scm-op'
+		),
+		
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $OWL->DatatypeProperty],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($pp) = $st->nodes;
+				$cl->store_triple($pp, $RDFS->subPropertyOf, $pp);
+				$cl->store_triple($pp, $OWL->equivalentProperty, $pp);
+			},
+		'scm-dp'
+		),
+		
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $RDF->Property],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($pp) = $st->nodes;
+				$cl->store_triple($pp, $RDFS->subPropertyOf, $pp);
+				$cl->store_triple($pp, $OWL->equivalentProperty, $pp);
+			},
+		'????' # Ivan made this up
+		),
+		
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->equivalentProperty, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($p1, undef, $p2) = $st->nodes;
+				$cl->store_triple($p2, $OWL->equivalentProperty, $p1); # Toby added
+				$cl->store_triple($p1, $RDFS->subPropertyOf, $p2); 
+				$cl->store_triple($p2, $RDFS->subPropertyOf, $p1); 
+				unless ($p1->equal($p2))
+				{
+					$cl->graph->subjects($RDF->type, $p1)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $p2);
+					});
+					$cl->graph->subjects($RDF->type, $p2)->each(sub {
+						$cl->store_triple($_[0], $RDF->type, $p1);
+					});
+				}
+			},
+		'cax-eqp, cax-eqp1'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDFS->subPropertyOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($p1, undef, $p2) = $st->nodes;
+				$cl->graph->objects($p2, $RDFS->subPropertyOf)->each(sub {
+					my $p3 = $_[0];
+					if ($p1->equal($p3))
+					{
+						# scm-eqp2
+						$cl->store_triple($p1, $OWL->equivalentProperty, $p3);
+					}
+					else
+					{
+						# scm-spo
+						$cl->store_triple($p1, $RDFS->subPropertyOf, $p3);
+					}
+					# Ivan could optimise his version better.
+				});
+			},
+		'scm-spo, scm-eqp2'
+		),
+	
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDFS->domain, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($pp, undef, $c1) = $st->nodes;
+				$cl->graph->objects($c1, $RDFS->subClassOf)->each(sub {
+					my $c2 = $_[0];
+					$cl->store_triple($pp, $RDFS->domain, $c2) unless $c1->equal($c2);
+				});
+				my ($p2, undef, $c) = $st->nodes;
+				$cl->graph->subjects($RDFS->subPropertyOf, $p2)->each(sub {
+					my $p1 = $_[0];
+					$cl->store_triple($p1, $RDFS->domain, $c) unless $p1->equal($p2);
+				});
+			},
+		'scm-dom1, scm-dom2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDFS->range, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($pp, undef, $c1) = $st->nodes;
+				$cl->graph->objects($c1, $RDFS->subClassOf)->each(sub {
+					my $c2 = $_[0];
+					$cl->store_triple($pp, $RDFS->range, $c2) unless $c1->equal($c2);
+				});
+				my ($p2, undef, $c) = $st->nodes;
+				$cl->graph->subjects($RDFS->subPropertyOf, $p2)->each(sub {
+					my $p1 = $_[0];
+					$cl->store_triple($p1, $RDFS->range, $c) unless $p1->equal($p2);
+				});
+			},
+		'scm-rng1, scm-rng2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->hasValue, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c1, undef, $i)  = $st->nodes;
+				my @p1 = $cl->graph->objects($c1, $OWL->onProperty);
+				my @c2 = $cl->graph->subjects($OWL->hasValue, $i);
+				foreach my $p1 (@p1)
+				{
+					foreach my $c2 (@c2)
+					{
+						foreach my $p2 ($cl->graph->objects($c2, $OWL->onProperty))
+						{
+							$cl->store_triple($c1, $RDFS->subClassOf, $c2)
+								if $cl->graph->count_statements($p1, $RDFS->subPropertyOf, $p2);
+						}
+					}
+				}
+			},
+		'scm-hv'
+		),
+		
+	# @@TODO
+	# scm-svf1 and scm-svf2
+	# scm-avf1 and scm-avf2
+	
+	# scm-int
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->intersectionOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c, undef, $x) = $st->nodes;
+				$cl->store_triple($c, $RDFS->subClassOf, $_) foreach $cl->graph->get_list($x);
+			},
+		'scm-int'
+		),
+	
+	# scm-uni
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->unionOf, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($c, undef, $x) = $st->nodes;
+				$cl->store_triple($_, $RDFS->subClassOf, $c) foreach $cl->graph->get_list($x);
+			},
+		'scm-uni'
+		),
+		
+		
 	);
 
 sub _property_chain
