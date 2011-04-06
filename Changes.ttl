@@ -40,6 +40,18 @@ my:v_0-000_02
 		dcs:item   [ rdfs:label "Implemented some more of OWL2 RL."@en ]
 		] .
 
+my:v_0-000_03
+
+	a               :Version ;
+	dc:issued       "2011-04-06"^^xsd:date ;
+	:revision       "0.000_03"^^xsd:string ;
+	:file-release   <http://backpan.cpan.org/authors/id/T/TO/TOBYINK/RDF-Closure-0.000_03.tar.gz> ;
+	dcs:changeset [
+		dcs:versus my:v_0-000_02 ;
+		dcs:item   [ rdfs:label "Implemented some more of OWL2 RL."@en ] ;
+		dcs:item   [ rdfs:label "Some small optimisations."@en ]
+		] .
+
 #############################################################
 
 my:project
@@ -59,7 +71,7 @@ my:project
 	:tester         toby:i ;
 	:created        "2011-02-23"^^xsd:date ;
 	:license        <http://dev.perl.org/licenses/> ;
-	:release        my:v_0-000_01 , my:v_0-000_02 .
+	:release        my:v_0-000_01 , my:v_0-000_02 , my:v_0-000_03 .
 
 #############################################################
 

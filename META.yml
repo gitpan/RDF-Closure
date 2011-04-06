@@ -51,4 +51,4 @@ resources:
   homepage: http://search.cpan.org/dist/RDF-Closure/
   license: http://dev.perl.org/licenses/
   repository: http://goddamn.co.uk/viewvc/perlmods/RDF-Closure/
-version: 0.000_02
+version: 0.000_03

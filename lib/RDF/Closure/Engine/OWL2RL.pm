@@ -13,6 +13,7 @@ use RDF::Closure::AxiomaticTriples qw[
 	];
 use RDF::Closure::DatatypeHandling qw[
 	literals_identical
+	literal_valid
 	];
 use RDF::Closure::XsdDatatypes qw[
 	$OWL_RL_Datatypes
@@ -30,7 +31,7 @@ use namespace::clean;
 
 use base qw[RDF::Closure::Engine::Core];
 
-our $VERSION = '0.000_02';
+our $VERSION = '0.000_03';
 
 our @OneTimeRules = (
 
@@ -107,7 +108,7 @@ our @OneTimeRules = (
 						# RULE dt-not-type
 						$cl->add_error("Literal's lexical value and datatype do not match: (%s,%s)",
 							$lt->literal_value, $lt->literal_datatype)
-							if 0; # @@TODO: check literal value is valid for datatype
+							unless literal_valid($lt);
 					}
 				});
 				
@@ -235,6 +236,8 @@ our @OneTimeRules = (
 		),
 
 	);
+
+my $_EQ_REF = {};
 
 our @Rules = (
 
@@ -571,8 +574,11 @@ our @Rules = (
 		sub {
 				my ($cl, $st, $rule) = @_;
 				my @nodes = $st->nodes;
-				$cl->store_triple($nodes[$_], $OWL->sameAs, $nodes[$_])
-					for 0..2;
+				for (0..2)
+				{
+					next if $_EQ_REF->{ $nodes[$_]->sse }++; # optimisation
+					$cl->store_triple($nodes[$_], $OWL->sameAs, $nodes[$_]);
+				}
 			},
 		'eq-ref'
 		),
@@ -654,17 +660,38 @@ our @Rules = (
 		[undef, $RDF->type, $OWL->AllDifferent],
 		sub {
 				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
-				# @@TODO
+				my $x = $s;
+				my @m1 = $cl->graph->objects($x, $OWL->members);
+				my @m2 = $cl->graph->objects($x, $OWL->distinctMembers);
+				LOOPY: foreach my $y ((@m1, @m2))
+				{
+					my @zis = $cl->graph->get_list($y);
+					LOOPI: foreach my $i (0 .. scalar(@zis)-1)
+					{
+						my $zi = $zis[$i];
+						LOOPJ: foreach my $j ($i+1 .. scalar(@zis)-1)
+						{
+							my $zj = $zis[$j];
+							next LOOPJ if $zi->equal($zj); # caught by another rule
+							
+							$cl->add_error("'sameAs' and 'AllDifferent' cannot be used on the same subject-object pair: (%s, %s)", $zi, $zj)
+								if $cl->count_statements($zi, $OWL->sameAs, $zj)
+								|| $cl->count_statements($zj, $OWL->sameAs, $zi);
+						}
+					}
+				}
 			},
 		'eq-diff2, eq-diff3'
 		),
 
 	# Ivan doesn't seem to have this rule, but it's required by test cases.
+	# { ?x1 owl:differentFrom ?x2 . } => { ?x2 owl:differentFrom ?x1 . } .
 	RDF::Closure::Rule::StatementMatcher->new(
 		[undef, $OWL->differentFrom, undef],
 		sub {
-				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
-				$cl->store_triple($o, $p, $s);
+				my ($cl, $st, $rule) = @_;
+				my ($x1, undef, $x2) = $st->nodes;
+				$cl->store_triple($x2, $OWL->differentFrom, $x1);
 			},
 		'????'
 		),
@@ -745,12 +772,181 @@ our @Rules = (
 		'cls-comm'
 		),
 
-	# @@TODO
-	# cls-svf1 and cls-svf2
-	# cls-avf
-	# cls-hv1 and cls-hv2
-	# cls-maxc1 and cls-maxc1
-	# cls-maxqc1, cls-maxqc2, cls-maxqc3, cls-maxqc4
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->someValuesFrom, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $y) = $st->nodes;
+				$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+					my $pp = shift;
+					$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+						my ($u, undef, $v) = $_[0]->nodes;
+						if ($y->equal($OWL->Thing) or $cl->graph->count_statements($u, $RDF->type, $y))
+						{
+							$cl->store_triple($u, $RDF->type, $xx);
+						}
+					});
+				});				
+			},
+		'cls-svf1, cls-svf2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->allValuesFrom, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $y) = $st->nodes;
+				$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+					my $pp = shift;
+					$cl->graph->subjects($RDF->type, $xx)->each(sub{
+						my $u = shift;
+						$cl->graph->objects($u, $pp)->each(sub{
+							my $v = shift;
+							$cl->store_triple($v, $RDF->type, $y);
+						});
+					});
+				});				
+			},
+		'cls-avf'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->hasValue, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $y) = $st->nodes;
+				$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+					my $pp = shift;
+					$cl->graph->subjects($RDF->type, $xx)->each(sub{
+						my $u = shift;
+						$cl->store_triple($u, $pp, $y);
+					});
+					$cl->graph->subjects($pp, $y)->each(sub{
+						my $u = shift;
+						$cl->store_triple($u, $RDF->type, $xx);
+					});
+				});				
+			},
+		'cls-hv1, cls-hv2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->maxCardinality, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $x) = $st->nodes;
+				my $val = int( $x->is_literal ? $x->literal_value : -1 );
+				# maxc1
+				if ($val == 0)
+				{
+					$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+						my $pp = shift;
+						$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+							my ($u, undef, $y) = $_[0]->nodes;
+							$cl->add_error("Erronous usage of maximum cardinality with %s, %s", $xx, $y)
+								if $cl->graph->count_statements($u, $RDF->type, $xx);
+						});
+					});				
+				}
+				# maxc2
+				elsif ($val == 1)
+				{
+					$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+						my $pp = shift;
+						$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+							my ($u, undef, $y1) = $_[0]->nodes;
+							if ($cl->graph->count_statements($u, $RDF->type, $xx))
+							{
+								$cl->graph->objects($u, $pp)->each(sub{
+									my $y2 = shift;
+									unless ($y1->equal($y2))
+									{
+										$cl->store_triple($y1, $OWL->sameAs, $y2);
+										$cl->store_triple($y2, $OWL->sameAs, $y1);
+									}
+								});
+							}
+						});
+					});				
+				}
+				else
+				{
+					# awesome, we can't do anything!
+				}
+			},
+		'cls-maxc1, cls-maxc2'
+		),
+
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->maxCardinality, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $x) = $st->nodes;
+				my $val = int( $x->is_literal ? $x->literal_value : -1 );
+				# cls-maxqc1 and cls-maxqc2
+				if ($val == 0)
+				{
+					my @cc = $cl->graph->objects($xx, $OWL->onClass);
+					$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+						my $pp = shift;
+						foreach my $cc (@cc)
+						{
+							$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+								my ($u, undef, $y) = $_[0]->nodes;
+								$cl->add_error("Erronous usage of maximum qualified cardinality with %s, %s, and %s", $xx, $cc, $y)
+									if $cl->graph->count_statements($u, $RDF->type, $xx)
+									&& ($cc->equal($OWL->Thing) or $cl->graph->count_statements($y, $RDF->type, $cc));
+							});
+						}
+					});				
+				}
+				# cls-maxqc3 and cls-maxqc4
+				elsif ($val == 1)
+				{
+					my @cc = $cl->graph->objects($xx, $OWL->onClass);
+					$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+						my $pp = shift;
+						foreach my $cc (@cc)
+						{
+							$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+								my ($u, undef, $y1) = $_[0]->nodes;
+								if ($cl->graph->count_statements($u, $RDF->type, $xx))
+								{
+									if ($cc->equal($OWL->Thing))
+									{
+										$cl->graph->objects($u, $pp)->each(sub{
+											my $y2 = shift;
+											unless ($y1->equal($y2))
+											{
+												$cl->store_triple($y1, $OWL->sameAs, $y2);
+												$cl->store_triple($y2, $OWL->sameAs, $y1);
+											}
+										});
+									}
+									elsif ($cl->graph->count_statements($y1, $RDF->type, $cc))
+									{
+										$cl->graph->objects($u, $pp)->each(sub{
+											my $y2 = shift;
+											if (!$y1->equal($y2)
+											and $cl->graph->count_statements($y2, $RDF->type, $cc))
+											{
+												$cl->store_triple($y1, $OWL->sameAs, $y2);
+												$cl->store_triple($y2, $OWL->sameAs, $y1);
+											}
+										});
+									}
+								}
+							});
+						}
+					});				
+				}
+				else
+				{
+					# awesome, we can't do anything!
+				}
+			},
+		'cls-maxqc1, cls-maxqc2, cls-maxqc3, cls-maxqc4'
+		),
 
 	RDF::Closure::Rule::StatementMatcher->new(
 		[undef, $OWL->oneOf, undef],
@@ -815,8 +1011,33 @@ our @Rules = (
 		'cax-dw'
 		),
 
-	# @@TODO
-	# cax-adc
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $RDF->type, $OWL->AllDisjointClasses],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my $x = $st->subject;
+				$cl->graph->objects($x, $OWL->members)->each(sub{
+					my @classes = $cl->graph->get_list($_[0]);
+					if (@classes)
+					{
+						for my $i (0 .. scalar(@classes)-1)
+						{
+							my $cl1 = $classes[$i];
+							$cl->graph->subjects($RDF->type, $cl1)->each(sub{
+								my $z = shift;
+								for my $j ($i+1 .. scalar(@classes)-1)
+								{
+									my $cl2 = $classes[$j];
+									$cl->add_error("Disjoint classes %s and %s have a common individual %s", $cl1, $cl2, $z)
+										if $cl->count_statements($z, $RDF->type, $cl2);
+								}
+							});
+						}
+					}
+				});
+			},
+		'cax-adc'
+		),
 	
 	RDF::Closure::Rule::StatementMatcher->new(
 		[undef, $RDF->type, $OWL->Class],
@@ -1015,7 +1236,6 @@ our @Rules = (
 		'scm-uni'
 		),
 		
-		
 	);
 
 sub _property_chain
@@ -1068,6 +1288,7 @@ sub __init__
 	my ($self, @args) = @_;
 	$self->SUPER::__init__(@args);
 	$self->{bnodes} = [];
+	$self->{options}{technique} = 'RULE';
 	return $self;
 }
 

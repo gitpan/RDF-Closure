@@ -8,13 +8,13 @@ use RDF::Trine;
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_02';
+our $VERSION = '0.000_03';
 
 sub new
 {
 	my ($class, $code, $name) = @_;
 	
-	throw Error "Code must be a coderef."
+	throw Error::Simple("Code must be a coderef.")
 		unless ref $code eq 'CODE';
 	
 	bless { code => $code, name => $name }, $class;

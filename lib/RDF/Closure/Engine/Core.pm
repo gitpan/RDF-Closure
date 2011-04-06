@@ -14,7 +14,7 @@ use constant {
 	FALSE   => 0,
 	};
 
-our $VERSION = '0.000_02';
+our $VERSION = '0.000_03';
 
 our $debugGlobal = FALSE;
 
@@ -101,12 +101,13 @@ sub add_error
 	$message = sprintf($message, @params)
 		if @params;
 	
-	printf("** %s\n", $message)
-		if $self->{_debug};
+	unless (grep { $message eq $_ } @{ $self->{error_messages} })
+	{
+		push @{ $self->{error_messages} }, $message;
+		printf("** %s\n", $message)
+			if $self->{_debug};
+	}
 	
-	push @{ $self->{error_messages} }, $message
-		unless grep { $message eq $_ } @{ $self->{error_messages} };
-		
 	return $self;
 }
 
@@ -163,7 +164,7 @@ sub get_literal_value
 sub empty_stored_triples
 {
 	my ($self) = @_;
-	$self->{added_triples} = [];
+	$self->{added_triples} = {};
 	return $self;
 }
 
@@ -175,12 +176,13 @@ sub flush_stored_triples
 
 	$self->graph->begin_bulk_ops;
 	$self->graph->add_statement($_, $self->{inferred_context})
-		foreach @{ $self->{added_triples} };
+		foreach values %{ $self->{added_triples} };
 	$self->graph->end_bulk_ops;
 	
 	$self->empty_stored_triples;
 }
 
+my $i_know = {};
 sub store_triple
 {
 	my $self = shift;
@@ -188,9 +190,12 @@ sub store_triple
 	{
 		foreach (@_)
 		{
+			my $sse = $_->sse;
+			next if $i_know->{$sse}++; # cache: seems to speed things up
+			next if defined $self->{added_triples}{$sse};
 			next if $self->graph->count_statements($_->subject, $_->predicate, $_->object);
-			printf("%s\n", $_->sse) if $self->{_debug};
-			push @{ $self->{added_triples} }, $_;
+			printf("%s\n", $sse) if $self->{_debug};
+			$self->{added_triples}{$sse} = $_;
 		}
 	}
 	else
@@ -263,7 +268,7 @@ sub store_triple
 					foreach @OTHER;
 			}
 			
-			$new_cycle = scalar @{ $self->{added_triples} };
+			$new_cycle = scalar values %{ $self->{added_triples} };
 			$self->flush_stored_triples;
 		}
 

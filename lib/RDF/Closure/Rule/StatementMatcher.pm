@@ -8,7 +8,7 @@ use RDF::Trine;
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_02';
+our $VERSION = '0.000_03';
 
 sub new
 {

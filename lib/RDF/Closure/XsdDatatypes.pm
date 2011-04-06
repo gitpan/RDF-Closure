@@ -8,7 +8,7 @@ use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
 
 use base qw[Exporter];
 
-our $VERSION = '0.000_02';
+our $VERSION = '0.000_03';
 
 our @EXPORT = qw[];
 our @EXPORT_OK = qw[
