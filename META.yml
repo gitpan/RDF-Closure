@@ -6,6 +6,7 @@ author:
 build_requires:
   ExtUtils::MakeMaker: 6.59
   Test::More: 0.61
+  Test::RDF: 0.24
 configure_requires:
   ExtUtils::MakeMaker: 6.59
 distribution_type: module
@@ -44,7 +45,6 @@ requires:
   RDF::Trine: 0.135
   URI: 0
   XML::LibXML: 1.94
-  common::sense: 0
   namespace::clean: 0
   perl: 5.8.0
 resources:
@@ -52,4 +52,4 @@ resources:
   homepage: https://metacpan.org/release/RDF-Closure
   license: http://dev.perl.org/licenses/
   repository: https://bitbucket.org/tobyink/p5-rdf-closure
-version: 0.000_04
+version: 0.000_05

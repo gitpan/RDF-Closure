@@ -10,7 +10,7 @@ use Scalar::Util qw[blessed];
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_04';
+our $VERSION = '0.000_05';
 
 sub new
 {

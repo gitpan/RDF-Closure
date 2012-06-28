@@ -6,7 +6,6 @@
 	:perl_version_from _:main ;
 	:version_from _:main ;
 	:readme_from _:main ;
-	:requires "common::sense" ;
 	:requires "Data::UUID" ;
 	:requires "DateTime" ;
 	:requires "DateTime::Format::Strptime";
@@ -20,6 +19,7 @@
 	:requires "RDF::Trine 0.135" ;
 	:requires "URI" ;
 	:requires "XML::LibXML 1.94" ;
+	:test_requires "Test::RDF 0.24" ;
 	:test_requires "Test::More 0.61" .
 
 _:main <http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#fileName> "lib/RDF/Closure.pm" .

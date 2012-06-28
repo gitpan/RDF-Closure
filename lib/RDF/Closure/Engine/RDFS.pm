@@ -20,7 +20,7 @@ use namespace::clean;
 
 use base qw[RDF::Closure::Engine::Core];
 
-our $VERSION = '0.000_04';
+our $VERSION = '0.000_05';
 
 our @OneTimeRules = (
 

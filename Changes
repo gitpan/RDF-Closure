@@ -6,6 +6,10 @@ Home page:    <https://metacpan.org/release/RDF-Closure>
 Bug tracker:  <http://rt.cpan.org/Dist/Display.html?Queue=RDF-Closure>
 Maintainer:   Toby Inkster <mailto:tobyink@cpan.org>
 
+0.000_05  2012-06-28
+
+ - (Bugfix Packaging) Fix missing dependency on Test::RDF
+
 0.000_04  2012-06-27
 
  - (Addition) OWL2 Plus engine

@@ -11,7 +11,7 @@ use Module::Pluggable
 	sub_name    => 'engines',	
 	;
 
-our $VERSION = '0.000_04';
+our $VERSION = '0.000_05';
 
 sub new
 {

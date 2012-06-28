@@ -52,3 +52,14 @@ my:v_0-000_04
 		dcs:item   [ rdfs:label "Module::Package::RDF"@en ; a dcs:Packaging ]
 	] .
 
+my:project :release my:v_0-000_05 .
+my:v_0-000_05
+	a               :Version ;
+	dc:issued       "2012-06-28"^^xsd:date ;
+	:revision       "0.000_05"^^xsd:string ;
+	:file-release   <http://backpan.cpan.org/authors/id/T/TO/TOBYINK/RDF-Closure-0.000_05.tar.gz> ;
+	dcs:changeset [
+		dcs:versus my:v_0-000_04 ;
+		dcs:item   [ rdfs:label "Fix missing dependency on Test::RDF"@en ; a dcs:Packaging, dcs:Bugfix ]
+	] .
+
