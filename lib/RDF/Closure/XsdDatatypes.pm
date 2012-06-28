@@ -1,14 +1,15 @@
 package RDF::Closure::XsdDatatypes;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use RDF::Trine qw[statement];
 use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
 
 use base qw[Exporter];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our @EXPORT = qw[];
 our @EXPORT_OK = qw[
@@ -91,7 +92,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 Copyright 2008-2011 Ivan Herman
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -108,6 +109,14 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 
 =cut
 

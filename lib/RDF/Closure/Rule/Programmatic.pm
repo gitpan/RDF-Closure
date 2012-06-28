@@ -1,14 +1,15 @@
 package RDF::Closure::Rule::Programmatic;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Error qw[:try];
 use RDF::Trine;
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 sub new
 {
@@ -29,9 +30,10 @@ sub call
 sub apply_to_closure
 {
 	my ($self, $closure) = @_;
-	$self->debug;
+	$self->pre_atc;
 	$self->call($closure, $self);
-	$self;
+	$self->post_atc;
 }
 
 1;
+

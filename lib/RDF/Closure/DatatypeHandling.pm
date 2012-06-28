@@ -2,7 +2,8 @@ package RDF::Closure::DatatypeHandling;
 
 use 5.008;
 use bignum;
-use common::sense;
+use strict;
+use utf8;
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -14,20 +15,23 @@ use MIME::Base64 qw[encode_base64 decode_base64];
 use RDF::Trine qw[statement iri];
 use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
 use RDF::Closure::DatatypeTuple;
+use Scalar::Util qw[blessed];
 use URI qw[];
 use XML::LibXML;
 
 use base qw[Exporter];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our @EXPORT = qw[];
 our @EXPORT_OK = qw[
 	literal_tuple
 	literal_valid
 	literal_canonical
+	literal_to_perl
 	literal_canonical_safe
 	literals_identical
+	$RDF $RDFS $OWL $XSD
 	];
 
 use constant {
@@ -35,9 +39,6 @@ use constant {
 	FALSE   => 0,
 	};
 use namespace::clean;
-
-our $FORCE_UTC;
-BEGIN { $FORCE_UTC = FALSE; }
 
 sub _strToBool
 {
@@ -136,7 +137,7 @@ sub _strToBoundNumeral
 	
 	$conversion ||= sub { Math::BigInt->new($_[0]); };
 	
-	try
+	return try
 	{
 		my $i = $conversion->($incoming_v);
 		
@@ -147,13 +148,13 @@ sub _strToBoundNumeral
 		$v =~ s/^(\-)?\./${1}0./;          # restore leading zero if abs($v) < 1.0
 		$v = '0'         unless length $v; # empty string is '0'
 		
-		return RDF::Closure::Datatype::Decimal->new($v)
+		return RDF::Closure::DatatypeTuple::Decimal->new($v)
 			if ( (!defined $interval->[0] or $interval->[0] < $i)
 			and  (!defined $interval->[1] or $interval->[1] > $i) );
-	}
-	except
-	{
-		return RDF::Closure::Datatype::Decimal->new($incoming_v);
+#	}
+#	except
+#	{
+#		return RDF::Closure::DatatypeTuple::Decimal->new($incoming_v);
 	};
 	
 	throw Error::Simple(sprintf('Invalid numerical value "%s"', $incoming_v));
@@ -239,7 +240,7 @@ sub _strToHexBinary
 	
 	sub _strToDateTimeAndStamp
 	{
-		my ($incoming_v, $timezone_required) = @_;
+		my ($incoming_v, $timezone_required, $FORCE_UTC) = @_;
 		$format ||= DateTime::Format::XSD->new;
 
 		my $v = try
@@ -284,10 +285,10 @@ sub _strToHexBinary
 
 	sub _strToTime
 	{
-		my ($incoming_v) = @_;
+		my ($incoming_v, $FORCE_UTC) = @_;
 		# Just pass through _strToDateTimeAndStamp with a fake date (which
 		# shouldn't be too near any leap seconds!)
-		my $rv = ''._strToDateTimeAndStamp("2009-02-12T${incoming_v}", FALSE);
+		my $rv = ''._strToDateTimeAndStamp("2009-02-12T${incoming_v}", FALSE, $FORCE_UTC);
 		$rv =~ s/^\d{4}-\d{2}-\d{2}T//i;
 		return RDF::Closure::DatatypeTuple::Time->new($rv);
 	}
@@ -468,52 +469,146 @@ sub _strToPlainLiteral
 }
 
 
-our $mapping = {
-	$XSD->language->uri  =>                 sub { _strToVal_Regexp($_[0], $_re_language); },
-	$XSD->NMTOKEN->uri  =>                  sub { _strToVal_Regexp($_[0], $_re_NMTOKEN); },
-	$XSD->Name->uri  =>                     sub { _strToVal_Regexp($_[0], $_re_NMTOKEN, $_re_Name_ex); },
-	$XSD->NCName->uri  =>                   sub { _strToVal_Regexp($_[0], $_re_NCName, $_re_NCName_ex); },
-	$XSD->token->uri  =>                    \&_strToToken,
-	$RDF->PlainLiteral->uri  =>             \&_strToPlainLiteral,
-	$XSD->boolean->uri  =>                  \&_strToBool,
-	$XSD->decimal->uri  =>                  \&_strToDecimal,
-	$XSD->anyURI->uri  =>                   \&_strToAnyURI,
-	$XSD->base64Binary->uri  =>             \&_strToBase64Binary,
-	$XSD->double->uri  =>                   \&_strToDouble,
-	$XSD->float->uri  =>                    \&_strToFloat,
-	$XSD->byte->uri  =>                     sub { _strToBoundNumeral($_[0], $_limits_byte); },
-	$XSD->int->uri  =>                      sub { _strToBoundNumeral($_[0], $_limits_int); },
-	$XSD->long->uri  =>                     sub { _strToBoundNumeral($_[0], $_limits_long); },
-	$XSD->positiveInteger->uri  =>          sub { _strToBoundNumeral($_[0], $_limits_positiveInteger); },
-	$XSD->nonPositiveInteger->uri  =>       sub { _strToBoundNumeral($_[0], $_limits_nonPositiveInteger); },
-	$XSD->negativeInteger->uri  =>          sub { _strToBoundNumeral($_[0], $_limits_negativeInteger); },
-	$XSD->nonNegativeInteger->uri  =>       sub { _strToBoundNumeral($_[0], $_limits_nonNegativeInteger); },
-	$XSD->short->uri  =>                    sub { _strToBoundNumeral($_[0], $_limits_short); },
-	$XSD->unsignedByte->uri  =>             sub { _strToBoundNumeral($_[0], $_limits_unsignedByte); },
-	$XSD->unsignedShort->uri  =>            sub { _strToBoundNumeral($_[0], $_limits_unsignedShort); },
-	$XSD->unsignedInt->uri  =>              sub { _strToBoundNumeral($_[0], $_limits_unsignedInt); },
-	$XSD->unsignedLong->uri  =>             sub { _strToBoundNumeral($_[0], $_limits_unsignedLong); },
-	$XSD->hexBinary->uri  =>                \&_strToHexBinary,
-	$RDF->XMLLiteral->uri	 =>             \&_strToXMLLiteral,
-	$XSD->integer->uri  =>                  sub { _strToBoundNumeral($_[0], [undef, undef]); },
-	$XSD->string->uri  =>                   \&_strToVal_Regexp,
-	$XSD->normalizedString->uri  =>         sub { _strToVal_Regexp($_[0], $_re_normalString); },
-	$XSD->dateTime->uri  =>                 sub { _strToDateTimeAndStamp($_[0], FALSE); },
-	$XSD->dateTimeStamp->uri  =>            sub { _strToDateTimeAndStamp($_[0], TRUE); },
-#	# These are RDFS specific...
-	$XSD->time->uri  =>                     \&_strToTime,
-	$XSD->date->uri  =>                     sub { _strToDateOrPart($_[0], 'Date', '%Y-%m-%d'); },
-	$XSD->gYearMonth->uri  =>               sub { _strToDateOrPart($_[0], 'GYearMonth', '%Y-%m'); },
-	$XSD->gYear->uri  =>                    sub { _strToDateOrPart($_[0], 'GYear', '%Y'); },
-	$XSD->gMonthDay->uri  =>                sub { _strToDateOrPart($_[0], 'GMonthDay', '--%m-%d'); },
-	$XSD->gDay->uri  =>                     sub { _strToDateOrPart($_[0], 'GDay', '---%d'); },
-	$XSD->gMonth->uri  =>                   sub { _strToDateOrPart($_[0], 'GMonth', '--%m'); },
-};
+{
+	my %mapping = (
+		$XSD->language->uri  =>                 sub { _strToVal_Regexp($_[0], $_re_language); },
+		$XSD->NMTOKEN->uri  =>                  sub { _strToVal_Regexp($_[0], $_re_NMTOKEN); },
+		$XSD->Name->uri  =>                     sub { _strToVal_Regexp($_[0], $_re_NMTOKEN, $_re_Name_ex); },
+		$XSD->NCName->uri  =>                   sub { _strToVal_Regexp($_[0], $_re_NCName, $_re_NCName_ex); },
+		$XSD->token->uri  =>                    \&_strToToken,
+		$RDF->PlainLiteral->uri  =>             \&_strToPlainLiteral,
+		$XSD->boolean->uri  =>                  \&_strToBool,
+		$XSD->decimal->uri  =>                  \&_strToDecimal,
+		$XSD->anyURI->uri  =>                   \&_strToAnyURI,
+		$XSD->base64Binary->uri  =>             \&_strToBase64Binary,
+		$XSD->double->uri  =>                   \&_strToDouble,
+		$XSD->float->uri  =>                    \&_strToFloat,
+		$XSD->byte->uri  =>                     sub { _strToBoundNumeral($_[0], $_limits_byte); },
+		$XSD->int->uri  =>                      sub { _strToBoundNumeral($_[0], $_limits_int); },
+		$XSD->long->uri  =>                     sub { _strToBoundNumeral($_[0], $_limits_long); },
+		$XSD->positiveInteger->uri  =>          sub { _strToBoundNumeral($_[0], $_limits_positiveInteger); },
+		$XSD->nonPositiveInteger->uri  =>       sub { _strToBoundNumeral($_[0], $_limits_nonPositiveInteger); },
+		$XSD->negativeInteger->uri  =>          sub { _strToBoundNumeral($_[0], $_limits_negativeInteger); },
+		$XSD->nonNegativeInteger->uri  =>       sub { _strToBoundNumeral($_[0], $_limits_nonNegativeInteger); },
+		$XSD->short->uri  =>                    sub { _strToBoundNumeral($_[0], $_limits_short); },
+		$XSD->unsignedByte->uri  =>             sub { _strToBoundNumeral($_[0], $_limits_unsignedByte); },
+		$XSD->unsignedShort->uri  =>            sub { _strToBoundNumeral($_[0], $_limits_unsignedShort); },
+		$XSD->unsignedInt->uri  =>              sub { _strToBoundNumeral($_[0], $_limits_unsignedInt); },
+		$XSD->unsignedLong->uri  =>             sub { _strToBoundNumeral($_[0], $_limits_unsignedLong); },
+		$XSD->hexBinary->uri  =>                \&_strToHexBinary,
+		$RDF->XMLLiteral->uri	 =>             \&_strToXMLLiteral,
+		$XSD->integer->uri  =>                  sub { _strToBoundNumeral($_[0], [undef, undef]); },
+		$XSD->string->uri  =>                   sub { _strToVal_Regexp($_[0]); },
+		$XSD->normalizedString->uri  =>         sub { _strToVal_Regexp($_[0], $_re_normalString); },
+		$XSD->dateTime->uri  =>                 sub { my $n = $_[1]||__PACKAGE->new; _strToDateTimeAndStamp($_[0], FALSE, $n->force_utc); },
+		$XSD->dateTimeStamp->uri  =>            sub { my $n = $_[1]||__PACKAGE->new; _strToDateTimeAndStamp($_[0], TRUE, $n->force_utc); },
+	#	# These are RDFS specific...
+		$XSD->time->uri  =>                     \&_strToTime,
+		$XSD->date->uri  =>                     sub { _strToDateOrPart($_[0], 'Date', '%Y-%m-%d'); },
+		$XSD->gYearMonth->uri  =>               sub { _strToDateOrPart($_[0], 'GYearMonth', '%Y-%m'); },
+		$XSD->gYear->uri  =>                    sub { _strToDateOrPart($_[0], 'GYear', '%Y'); },
+		$XSD->gMonthDay->uri  =>                sub { _strToDateOrPart($_[0], 'GMonthDay', '--%m-%d'); },
+		$XSD->gDay->uri  =>                     sub { _strToDateOrPart($_[0], 'GDay', '---%d'); },
+		$XSD->gMonth->uri  =>                   sub { _strToDateOrPart($_[0], 'GMonth', '--%m'); },
+	);
+	
+	my @ichecks = (
+		sub 
+		{
+			my ($self, $lit1, $lit2) = @_;
+			# Perhaps we have a plain literal and an xsd:string.
+			# There's still a chance that they're identical!
+			# (refer to the value space of rdf:PlainLiteral)
+			if ($lit1->[0] eq $RDF->PlainLiteral->uri || $lit1->[0] eq 'RDF::Closure::DatatypeTuple::PlainLiteral'
+			and $lit2->[0] eq $XSD->string->uri       || $lit2->[0] eq 'RDF::Closure::DatatypeTuple::String')
+			{
+				return TRUE if $lit1->[1] eq sprintf('%s@', $lit2->[1]);
+			}
+			return FALSE;
+		},
+	);
+
+	sub new
+	{
+		my ($class, %args) = @_;
+		my $self = bless {%args}, $class;
+		while (my ($dt, $code) = each %mapping)
+		{
+			$self->{mapping}{$dt} ||= $code;
+		}
+		$self->{identity_checks} ||= [];
+		push @{ $self->{identity_checks} }, @ichecks;
+		return $self;
+	}
+}
+
+sub force_utc
+{
+	my ($self) = @_;
+	return $self->{force_utc} if defined $self->{force_utc};
+	return FALSE; # default
+}
+
+sub mapping
+{
+	my ($self, $dt) = @_;
+	if (defined $dt)
+	{
+		return $self->{mapping}{$dt};
+	}
+	return $self->{mapping};
+}
+
+sub _process_args
+{
+	my @args = @_;
+	my $self;
+	
+	if (blessed($args[0]) and $args[0]->isa(__PACKAGE__))
+	{
+		$self = shift @args;
+	}
+	elsif (!ref($args[0])  and $args[0]->isa(__PACKAGE__))
+	{
+		$self = shift(@args)->new;
+	}
+	else
+	{
+		$self = __PACKAGE__->new;
+	}
+	
+	return ($self, @args);
+}
+
+sub literal_to_perl
+{
+	my ($self, $lit) = _process_args(@_);
+	
+	my $dt = $lit->literal_datatype;
+	if (!defined $dt)
+	{
+		return RDF::Closure::DatatypeHandling::StringWithLang->new($lit->literal_value, $lit->literal_value_language);
+	}
+	elsif ($dt eq $RDF->PlainLiteral->uri)
+	{
+		if ($lit->literal_value =~ /^(.*)@([^@]*)$/)
+		{
+			return RDF::Closure::DatatypeHandling::StringWithLang->new($1, $2);
+		}
+		return $lit->literal_value;
+	}
+	elsif (defined $self->mapping($dt))
+	{
+		my $r = $self->mapping($dt)->($lit->literal_value, $self);
+		return defined $r->[1] ? $r->[1] : $r->[0];
+	}
+	
+	return $lit->literal_value;
+}
 
 sub literal_tuple
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit) = @_;
+	my ($self, $lit) = _process_args(@_);
 	
 	my $dt = $lit->literal_datatype;
 	if (!defined $dt)
@@ -524,9 +619,9 @@ sub literal_tuple
 		return [ 'RDF::Closure::DatatypeTuple::PlainLiteral',
 			sprintf('%s@%s', $lit->literal_value, lc($lit->literal_value_language||'')) ];
 	}
-	elsif (defined $mapping->{$dt})
+	elsif (defined $self->mapping($dt))
 	{
-		my $r = $mapping->{$dt}->($lit->literal_value);
+		my $r = $self->mapping($dt)->($lit->literal_value, $self);
 		return [ ref($r), "$r" ];
 	}
 	
@@ -535,12 +630,11 @@ sub literal_tuple
 
 sub literal_tuple_safe
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit) = @_;
+	my ($self, $lit) = _process_args(@_);
 	
 	return try
 	{
-		return literal_tuple($lit);
+		return $self->literal_tuple($lit);
 	}
 	catch Error with
 	{
@@ -550,12 +644,11 @@ sub literal_tuple_safe
 
 sub literal_valid
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit) = @_;
+	my ($self, $lit) = _process_args(@_);
 	
 	my $r = try
 	{
-		return literal_tuple($lit);
+		return $self->literal_tuple($lit);
 	}
 	catch Error with
 	{
@@ -568,8 +661,7 @@ sub literal_valid
 
 sub literal_canonical
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit) = @_;
+	my ($self, $lit) = _process_args(@_);
 	
 	if (!$lit->has_datatype)
 	{
@@ -584,10 +676,10 @@ sub literal_canonical
 	}
 	
 	my $dt = $lit->literal_datatype;
-	if (defined $dt and defined $mapping->{$dt})
+	if (defined $dt and defined $self->mapping($dt))
 	{
 		return RDF::Trine::Node::Literal->new(
-			$mapping->{$dt}->($lit->literal_value)->to_string,
+			$self->mapping($dt)->($lit->literal_value, $self)->to_string,
 			undef,
 			$dt,
 			);
@@ -598,12 +690,11 @@ sub literal_canonical
 
 sub literal_canonical_safe
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit) = @_;
-	
+	my ($self, $lit) = _process_args(@_);
+
 	return try
 	{
-		return literal_canonical($lit);
+		return $self->literal_canonical($lit);
 	}
 	catch Error with
 	{
@@ -613,24 +704,88 @@ sub literal_canonical_safe
 
 sub literals_identical
 {
-	shift if !ref($_[0]) && $_[0] eq __PACKAGE__ && defined $_[1];
-	my ($lit1, $lit2) = map { literal_tuple_safe($_); } @_[0..1];
+	my ($self, @args) = _process_args(@_);
+
+	my ($lit1, $lit2) = map { $self->literal_tuple_safe($_); } @args[0..1];
 	
 	return [$lit1, $lit2]
 		if ($lit1->[0] eq $lit2->[0] and $lit1->[1] eq $lit2->[1]);
-	
-	# Perhaps we have a plain literal and an xsd:string.
+
 	($lit1, $lit2) = sort {$a->[0] cmp $b->[0]} ($lit1, $lit2);
-	# There's still a chance that they're identical!
-	# (refer to the value space of rdf:PlainLiteral)
-	if ($lit1->[0] eq $RDF->PlainLiteral->uri || $lit1->[0] eq 'RDF::Closure::DatatypeTuple::PlainLiteral'
-	and $lit2->[0] eq $XSD->string->uri       || $lit2->[0] eq 'RDF::Closure::DatatypeTuple::String')
+	foreach my $check (@{ $self->{identity_checks} })
 	{
-		return [$lit1, $lit2]
-			if $lit1->[1] eq sprintf('%s@', $lit2->[1]);
+		return [$lit1, $lit2] if $check->($self, $lit1, $lit2);
 	}
 	
 	return;
+}
+
+1;
+
+package RDF::Closure::DatatypeHandling::StringWithLang;
+
+use overload '""' => sub { $_[0]->value };
+
+sub new
+{
+	my ($class, @args) = @_;
+	return bless \@args, $class;
+}
+sub value { $_[0]->[0]; }
+sub lang  { lc $_[0]->[1]; }
+sub trine { RDF::Trine::Node::Literal->new($_[0]->value, $_[0]->lang); }
+
+sub lang_range_check
+{
+	my ($self, $range) = @_;
+	my $lang = $self->lang;
+	
+	$range =~ s/\s//g;
+	$lang  =~ s/\s//g;
+	
+	my $match = sub
+	{
+		my ($r, $l) = @_;
+		return ($r eq '*' || $r eq $l);
+	};
+	
+	my @range = split /\-/, lc $range;
+	my @lang  = split /\-/, lc $lang;
+	
+	return unless $match->($range[0], $lang[0]);
+	
+	my $rI = 1;
+	my $rL = 1;
+	
+	LOOP: while ($rI < scalar(@range))
+	{
+		if ($range[$rI] eq '*')
+		{
+			$rI++;
+			next LOOP;
+		}
+		
+		if ($rL >= scalar(@lang))
+		{
+			return;
+		}
+		
+		if ($match->($range[$rI], $lang[$rL]))
+		{
+			$rI++;
+			$rL++;
+			next LOOP;
+		}
+		
+		if (length($lang[$rL]) == 1)
+		{
+			return;
+		}
+		
+		$rL++;
+	}
+
+	return 1;
 }
 
 1;
@@ -647,7 +802,9 @@ RDFClosure/DatatypeHandling.py
 
 Provides datatype handling functions for OWL 2 RL and RDFS datatypes.
 
-This module exports four functions:
+=head2 Functional Interface
+
+This module can export four functions:
 
 =over
 
@@ -662,8 +819,8 @@ literal is of an unrecognised datatype, simply returns the original literal.
 
 Note that as per OWL 2 RL rules, xsd:dateTime literals are I<not> shifted to UTC,
 even though XSD says that UTC is the canonical form. By setting the
-C<< $RDF::Closure::DatatypeHandling::FORCE_UTC >> global variable to true,
-you can force XSD-style canonicalisation.
+C<< force_utc >> to true, you can force XSD-style canonicalisation. (See
+the object-oriented interface.)
 
 =item * C<< literal_canonical_safe($lit) >>
 
@@ -700,9 +857,28 @@ Here are some example literals that are not identical:
   "2010-01-01T12:00:00+00:00"^^xsd:dateTime
   "2010-01-01T11:00:00-01:00"^^xsd:dateTime
 
-This latter example is affected by C<< $RDF::Closure::DatatypeHandling::FORCE_UTC >>.
+This latter example is affected by C<< force_utc >>.
+
+=item * C<< literal_to_perl($lit) >>
+
+Returns a scalar value for the literal, or an appropriate object with overloaded operators
+(e.g. L<DateTime>, L<Math::BigInt>).
 
 =back
+
+Variables C<$RDF>, C<$RDFS>, C<$OWL> and C<$XSD> may also be exported
+as a convenience. These are L<RDF::Trine::Namespace> objects. Don't
+modify them.
+
+=head2 Object-Oriented Interface
+
+  use RDF::Trine;
+  use RDF::Closure::DatatypeHandling qw[$XSD];
+  
+  my $lit     = RDF::Trine::Node::Literal->new(
+    "2010-01-01T11:00:00-01:00", undef, $XSD->dateTime);
+  my $handler = RDF::Closure::DatatypeHandling->new(force_utc => 1);
+  print $handler->literal_canonical($lit)->as_ntriples;
 
 =head1 SEE ALSO
 
@@ -718,7 +894,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 Copyright 2008-2011 Ivan Herman
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -735,6 +911,13 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
 

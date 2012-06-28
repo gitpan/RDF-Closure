@@ -2,7 +2,26 @@ NAME
     RDF::Closure - pure Perl RDF inferencing
 
 SYNOPSIS
-    @@TODO
+     use RDF::Trine::Iterator qw[sgrep];
+     use RDF::Closure qw[iri mk_filter FLT_NONRDF FLT_BORING];
+ 
+     my $data = iri('http://bloggs.example.com/foaf.rdf');
+     my $foaf = iri('http://xmlns.com/foaf/0.1/index.rdf');
+ 
+     my $model = RDF::Trine::Model->temporary_model;
+     my $p     = 'RDF::Trine::Parser';
+     $p->parse_url_into_model($data->uri, $model, context => $data->uri);
+     $p->parse_url_into_model($foaf->uri, $model, context => $foaf->uri);
+ 
+     my $cl = RDF::Closure::Engine->new('rdfs', $model);
+     $cl->closure;
+ 
+     my $filter = mk_filter(FLT_NONRDF|FLT_BORING, [$foaf]);  
+     my $output = &sgrep($filter, $model->as_stream);
+ 
+     print RDF::Trine::Serializer
+       ->new('RDFXML')
+       ->serialize_iterator_to_string($output);
 
 DESCRIPTION
     This distribution is a pure Perl RDF inference engine designed as an
@@ -41,9 +60,15 @@ DESCRIPTION
           # are non-RDF (e.g. literal subject) and those which are boring.
 
         Which triples are boring? Any triple of the form { ?x owl:sameAs ?x
-        .} is boring. Any triple where the subject, predicate and object
-        nodes are all in the RDF, RDFS, OWL or XSD namespaces is boring.
-        Other triples are not boring.
+        .}, { ?x owl:equivalentProperty ?x .}, { ?x owl:equivalentClass ?x
+        .}, { ?x rdfs:subPropertyOf ?x .} or { ?x rdfs:subClassOf ?x .} is
+        boring (i.e. where these statements have the same term in subject
+        and object position). Any triple where the subject, predicate and
+        object nodes are all in the RDF, RDFS, OWL or XSD namespaces is
+        boring. Other triples are not boring.
+
+    For convenience, "RDF::Closure" also exports variables called $RDF,
+    $RDFS, $OWL and $XSD which are RDF::Trine::Namespace objects.
 
 SEE ALSO
     RDF::Closure::Engine, RDF::Closure::Model, RDF::Trine::Parser::OwlFn.
@@ -58,7 +83,7 @@ AUTHOR
     Toby Inkster <tobyink@cpan.org>.
 
 COPYRIGHT
-    Copyright 2011 Toby Inkster
+    Copyright 2011-2012 Toby Inkster
 
     This library is free software; you can redistribute it and/or modify it
     under any of the following licences:
@@ -76,4 +101,9 @@ COPYRIGHT
 
     *   The Clarified Artistic License
         <http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
+
+DISCLAIMER OF WARRANTIES
+    THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+    WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+    MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 

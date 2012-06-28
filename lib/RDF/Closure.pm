@@ -1,26 +1,27 @@
 package RDF::Closure;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
-use RDF::Trine qw[];
 use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
 use RDF::Trine::Parser::OwlFn qw[];
 use RDF::Closure::Engine qw[];
 use RDF::Closure::Model qw[];
 use Scalar::Util qw[];
 
-use base qw[RDF::Trine];
+eval { require RDF::Trine };
+our @ISA = qw(RDF::Trine);
 
 use constant FLT_NONRDF => 1;
 use constant FLT_BORING => 2;
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our @EXPORT_OK;
 BEGIN
 {
-	@EXPORT_OK = (@RDF::Trine::EXPORT_OK, qw[mk_filter FLT_NONRDF FLT_BORING]);
+	@EXPORT_OK = (@RDF::Trine::EXPORT_OK, qw[mk_filter FLT_NONRDF FLT_BORING $RDF $RDFS $OWL $XSD]);
 }
 
 sub mk_filter
@@ -43,8 +44,14 @@ sub mk_filter
 		if ($conditions & FLT_BORING)
 		{
 			return 0
-				if $st->predicate->equal($OWL->sameAs)
-				&& $st->subject->equal($st->object);
+				if $st->subject->equal($st->object)
+				&& {
+					$OWL->sameAs->uri              => 1,
+					$OWL->equivalentProperty->uri  => 1,
+					$OWL->equivalentClass->uri     => 1,
+					$RDFS->subPropertyOf->uri      => 1,
+					$RDFS->subClassOf->uri         => 1,
+					}->{$st->predicate->uri};
 			
 			my @nodes = $st->nodes;
 			foreach my $node (@nodes[0..2])
@@ -84,7 +91,26 @@ RDF::Closure - pure Perl RDF inferencing
 
 =head1 SYNOPSIS
 
-@@TODO
+ use RDF::Trine::Iterator qw[sgrep];
+ use RDF::Closure qw[iri mk_filter FLT_NONRDF FLT_BORING];
+ 
+ my $data = iri('http://bloggs.example.com/foaf.rdf');
+ my $foaf = iri('http://xmlns.com/foaf/0.1/index.rdf');
+ 
+ my $model = RDF::Trine::Model->temporary_model;
+ my $p     = 'RDF::Trine::Parser';
+ $p->parse_url_into_model($data->uri, $model, context => $data->uri);
+ $p->parse_url_into_model($foaf->uri, $model, context => $foaf->uri);
+ 
+ my $cl = RDF::Closure::Engine->new('rdfs', $model);
+ $cl->closure;
+ 
+ my $filter = mk_filter(FLT_NONRDF|FLT_BORING, [$foaf]);  
+ my $output = &sgrep($filter, $model->as_stream);
+ 
+ print RDF::Trine::Serializer
+   ->new('RDFXML')
+   ->serialize_iterator_to_string($output);
 
 =head1 DESCRIPTION
 
@@ -126,12 +152,18 @@ of which represents a context that should be filtered out.
   # from $model except: those in the FOAF named graph, those which
   # are non-RDF (e.g. literal subject) and those which are boring.
 
-Which triples are boring? Any triple of the form { ?x owl:sameAs ?x .} is
-boring. Any triple where the subject, predicate and object nodes are all
-in the RDF, RDFS, OWL or XSD namespaces is boring. Other triples are not
-boring.
+Which triples are boring? Any triple of the form { ?x owl:sameAs ?x .},
+{ ?x owl:equivalentProperty ?x .}, { ?x owl:equivalentClass ?x .},
+{ ?x rdfs:subPropertyOf ?x .} or { ?x rdfs:subClassOf ?x .} is boring
+(i.e. where these statements have the same term in subject and object
+position). Any triple where the subject, predicate and object nodes are
+all in the RDF, RDFS, OWL or XSD namespaces is boring. Other triples are
+not boring.
 
 =back
+
+For convenience, C<RDF::Closure> also exports variables called C<$RDF>,
+C<$RDFS>, C<$OWL> and C<$XSD> which are L<RDF::Trine::Namespace> objects.
 
 =head1 SEE ALSO
 
@@ -152,7 +184,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -169,6 +201,12 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
 

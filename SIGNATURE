@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.66.
+signed via the Module::Signature module, version 0.68.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,50 +14,65 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 996f2122ddf7d62cbf0c44a5e4f63378aad05e8f Changes
-SHA1 bb52c5e90e2bb4a8f50c98bff1965d72e594bacf Changes.ttl
-SHA1 a185a877532403f0ec012c6172545cebf8afef42 Changes.xml
-SHA1 1b43efc8eabf7ad213442385a08da24b1b0df331 MANIFEST
-SHA1 3b21e083078c9f9b5b375c78de33339bbee77258 MANIFEST.SKIP
-SHA1 52e50a33bc0462b688bb7a5ab466699f5e0677ab META.yml
-SHA1 55d3a5965bf06c62f2f1d8d27aa078bf3f2c812f Makefile.PL
-SHA1 60592cace1398d36e035ab862c989ffc0a07b273 README
-SHA1 cbfeb17f6e84302a196564fc4f1b2db6db824c78 TODO
-SHA1 20c73697e1713638140c719d8eaa19a275ed43a5 inc/Module/AutoInstall.pm
-SHA1 7305dbe2904416e28decb05396988a5d51d578be inc/Module/Install.pm
-SHA1 ca13d9875e1249f6e84f7070be8152c34837955e inc/Module/Install/AutoInstall.pm
-SHA1 129960509127732258570c122042bc48615222e1 inc/Module/Install/Base.pm
-SHA1 cf3356ed9a5bd2f732527ef9e7bc5ef4458c8a93 inc/Module/Install/Can.pm
-SHA1 986dcb1f1b6a1fde7c51f1558b93368e2429caa2 inc/Module/Install/DOAPChangeSets.pm
-SHA1 bf0a3e1977effc2832d7a813a76dce3f31b437b6 inc/Module/Install/Fetch.pm
-SHA1 b501b0df59a5cd235cca473889f82c3d3429f39e inc/Module/Install/Include.pm
-SHA1 b721c93ca5bc9a6aa863b49af15f1b1de6125935 inc/Module/Install/Makefile.pm
-SHA1 026cc0551a0ad399d195e395b46bdf842e115192 inc/Module/Install/Metadata.pm
-SHA1 a615bb050ca0b2d79bfa0224addcb83019a53b09 inc/Module/Install/ReadmeFromPod.pm
-SHA1 5457015ea5a50e93465bf2dafa29feebd547f85b inc/Module/Install/Win32.pm
-SHA1 051e7fa8063908befa3440508d0584a2497b97db inc/Module/Install/WriteAll.pm
-SHA1 d47a444fb193cb3079fc3f7048f7d5f95e74db4e lib/RDF/Closure.pm
-SHA1 ea1b32812bf3c3c8b146608ea959d048d3322ebb lib/RDF/Closure/AxiomaticTriples.pm
-SHA1 2607de56c67e13509b4a993513fc677171807f76 lib/RDF/Closure/DatatypeHandling.pm
-SHA1 371046549a6398297442c490acddb597589524c2 lib/RDF/Closure/DatatypeTuple.pm
-SHA1 f8de4fb1b48eaad2406c58c8cc54f703a636ff15 lib/RDF/Closure/Engine.pm
-SHA1 7307d97e83a459729cafb2c948042e3429e75e2b lib/RDF/Closure/Engine/Core.pm
-SHA1 8b1d0781faad7cba77b486dce9800958216387f9 lib/RDF/Closure/Engine/OWL2RL.pm
-SHA1 250d03d8ae4594296de05b7b0c94f31d337a3f98 lib/RDF/Closure/Engine/RDFS.pm
-SHA1 29f3f015ba7ccf5c7862f88be0692d4711391ceb lib/RDF/Closure/Model.pm
-SHA1 4cd845021d1e1a99d03054c6103c4a566ffb5cf2 lib/RDF/Closure/Rule/Core.pm
-SHA1 4d253f5e704989b5159a1359a6a57c00d609a396 lib/RDF/Closure/Rule/PatternMatcher.pm
-SHA1 5f9230beec876650ad521cda578d3bfc03e14350 lib/RDF/Closure/Rule/Programmatic.pm
-SHA1 de7bde9396b24ebca802789f66c2f6aa695193fc lib/RDF/Closure/Rule/StatementMatcher.pm
-SHA1 34d83c43a714eb9530c566cccc6c9cc4f449065b lib/RDF/Closure/XsdDatatypes.pm
-SHA1 519098ee46214257e94d36cf4938b7762dd5f56b lib/RDF/Trine/Parser/OwlFn.pm
+SHA1 69e1560c4ccd726b35f8dbb3e70f5fdc6fb31d10 Changes
+SHA1 4f8f74883c875ac16791b355c07f58294743ab76 LICENSE
+SHA1 a6e38ad8e78aac8e640c6a58f2558ecf63ca0ed9 MANIFEST
+SHA1 aac93af81ff2b219a996cc71804b572b4d6f3541 META.yml
+SHA1 84366cd3811e570bb1c9e29f2990e5a0dc8601eb Makefile.PL
+SHA1 35f82ffaf7c63a7d429fe0548ee11236dda95674 README
+SHA1 9817bf2199af0d0dcc9fb2de82a275169308afd2 TODO
+SHA1 c1273d93f06ab4f7d0849153a8295758ec21198c examples/example1.pl
+SHA1 d5bc1451f8119bc2eba477cc805ec0fce58c7d00 examples/example2.pl
+SHA1 bc34fd41b265edf3dbe503d4aaa1985bac677a33 examples/example3.pl
+SHA1 f046d946a6c2644133c534c3437b123ebed0379e examples/example4.pl
+SHA1 06c410f05488c1612ed66b06d3a86b2580581e4a inc/Module/AutoInstall.pm
+SHA1 8a924add836b60fb23b25c8506d45945e02f42f4 inc/Module/Install.pm
+SHA1 61ab1dd37e33ddbe155907ce51df8a3e56ac8bbf inc/Module/Install/AutoInstall.pm
+SHA1 c04f94f91fa97b9f8cfb5a36071098ab0e6c78e3 inc/Module/Install/AutoManifest.pm
+SHA1 2d0fad3bf255f8c1e7e1e34eafccc4f595603ddc inc/Module/Install/Base.pm
+SHA1 f0e01fff7d73cd145fbf22331579918d4628ddb0 inc/Module/Install/Can.pm
+SHA1 7328966e4fda0c8451a6d3850704da0b84ac1540 inc/Module/Install/Fetch.pm
+SHA1 66d3d335a03492583a3be121a7d888f63f08412c inc/Module/Install/Include.pm
+SHA1 b62ca5e2d58fa66766ccf4d64574f9e1a2250b34 inc/Module/Install/Makefile.pm
+SHA1 1aa925be410bb3bfcd84a16985921f66073cc1d2 inc/Module/Install/Metadata.pm
+SHA1 3b9281ddf7dd6d6f5de0a9642c69333023193c80 inc/Module/Install/Package.pm
+SHA1 b86d0385e10881db680d28bde94f275e49e34a27 inc/Module/Install/TrustMetaYml.pm
+SHA1 e4196994fa75e98bdfa2be0bdeeffef66de88171 inc/Module/Install/Win32.pm
+SHA1 c3a6d0d5b84feb3280622e9599e86247d58b0d18 inc/Module/Install/WriteAll.pm
+SHA1 26d58a041cd6b3d21db98b32e8fd1841aae21204 inc/Module/Package.pm
+SHA1 6b807287940754cc31a3db59f2b22e363d5525be inc/Module/Package/Dist/RDF.pm
+SHA1 e31c281782183601e1e057c5914f63269e043932 inc/Scalar/Util.pm
+SHA1 5eae2f71c45a996a296d2445b18d0589307111f0 inc/Scalar/Util/PP.pm
+SHA1 feb933cefe2e3762e8322bd6071a2499f3440da1 inc/YAML/Tiny.pm
+SHA1 8105c0510a773b56840995fb4dd2dc64fe9ddaee inc/unicore/Name.pm
+SHA1 d4374c56309251ce78298758f535dd314d84d169 lib/RDF/Closure.pm
+SHA1 f71055d83ff9f2d6b25cafdd127acfd59d116476 lib/RDF/Closure/AxiomaticTriples.pm
+SHA1 29aecb2a84b8f016b6778b366e42519c3bd1fadb lib/RDF/Closure/DatatypeHandling.pm
+SHA1 97b1d177fed73626a6d261ab83876ffd4ad7cab6 lib/RDF/Closure/DatatypeTuple.pm
+SHA1 a37d7250909f8c83458e906680cc881ebd50cc13 lib/RDF/Closure/Engine.pm
+SHA1 4a4ac6c668f857a7f6fcd08ad857af056f6cee97 lib/RDF/Closure/Engine/Core.pm
+SHA1 4828862980d5ec2f20d4f98c148fa2afe4ec89be lib/RDF/Closure/Engine/OWL2Plus.pm
+SHA1 87587acf4a4d3ee7fce62642c6b849c105dc9161 lib/RDF/Closure/Engine/OWL2RL.pm
+SHA1 549ec57d861a733497a5294dea02b058f2d72578 lib/RDF/Closure/Engine/RDFS.pm
+SHA1 d59f4562e3a9d0b9866298e30afee6431a5e1dfc lib/RDF/Closure/Model.pm
+SHA1 4608de9c09c5e7c4799ad9e4feb2783f070f352d lib/RDF/Closure/RestrictedDatatype.pm
+SHA1 c0e9dff686154c5efd050edf2c826547eec411fa lib/RDF/Closure/Rule/Core.pm
+SHA1 97cf851bb05a9625145e9db6e407659fbb9d8981 lib/RDF/Closure/Rule/PatternMatcher.pm
+SHA1 8cf884272d4fec75a6061323af7a80237128a4e8 lib/RDF/Closure/Rule/Programmatic.pm
+SHA1 609f4d44296fdbbdda1084aab21cc5d5c15eafa9 lib/RDF/Closure/Rule/StatementMatcher.pm
+SHA1 ef2ca655e3b936b1ea840d76a24216c727d2121f lib/RDF/Closure/XsdDatatypes.pm
+SHA1 f352c29323ab7164d09e9f45f8db2f0526cdf2f1 lib/RDF/Trine/Parser/OwlFn.pm
 SHA1 ff69d76eadb6cb619e7c6114e978b2dfb9fd49df lib/RDF/Trine/Parser/OwlFn/Compiled.pm
-SHA1 362fd13c2d771cd3c3601417bb38c11ad1c081bf lib/RDF/Trine/Parser/OwlFn/Grammar.pm
+SHA1 0380c1068d6a2127759c6a1e36c7e64d167e6269 lib/RDF/Trine/Parser/OwlFn/Grammar.pm
+SHA1 0668981e8fc979256188dad910d956c979f5fa25 meta/changes.ttl
+SHA1 12a1aa6e02d5d999e7c1bde69ce263770e382fae meta/doap.ttl
+SHA1 04b49dd6a08d5eb6e89d422e4a41d011dc89053d meta/makefile.ttl
 SHA1 6e7a7677f8d4e6bd2bb1765ffc81aa3fbebe2da4 t/01basic.t
+SHA1 bcde620e09301de175de2f5cbe9507d5c19a8cbf t/02reasoning.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iEYEARECAAYFAk2c17AACgkQzr+BKGoqfTmUwQCeLvkkYduj1nIjYQxVb+yzA+IR
-LMgAoJn7fXMfu5J/tcVqkM1eg2+CWz13
-=MTUT
+iEYEARECAAYFAk/rpgsACgkQzr+BKGoqfTkbAwCeNAmNo1laeLJokGrRsFIhEsTA
+hwEAnRQAVqvMrjNdLkBlmKS1nOpS3Rwy
+=I7TT
 -----END PGP SIGNATURE-----

@@ -1,14 +1,15 @@
 package RDF::Closure::Rule::StatementMatcher;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Error qw[:try];
 use RDF::Trine;
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 sub new
 {
@@ -54,14 +55,14 @@ sub call
 sub apply_to_closure
 {
 	my ($self, $closure) = @_;
-	$self->debug;
+	$self->pre_atc;
 	
 	$closure->graph->get_statements(@{$self->pattern})->each(sub {
 		my ($st) = @_;
 		$self->call($closure, $st, $self);
 	});
 	
-	$self;
+	$self->post_atc;
 }
 
 sub apply_to_closure_given_statement
@@ -74,3 +75,4 @@ sub apply_to_closure_given_statement
 }
 
 1;
+

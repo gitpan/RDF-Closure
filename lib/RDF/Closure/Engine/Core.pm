@@ -1,7 +1,8 @@
 package RDF::Closure::Engine::Core;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Data::UUID;
 use Error qw[:try];
@@ -14,7 +15,7 @@ use constant {
 	FALSE   => 0,
 	};
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our $debugGlobal = FALSE;
 
@@ -35,14 +36,14 @@ sub new
 sub __init__
 {
 	my ($self, $graph, $axioms, $daxioms, $rdfs) = @_;
+	$axioms  = TRUE unless defined $axioms;
+	$daxioms = TRUE unless defined $daxioms;
 	$rdfs    = FALSE unless defined $rdfs;
 	$graph ||= RDF::Trine::Model->temporary_model;
 	
 	$self->{_debug} = $debugGlobal;
 
 	# Calculate the maximum 'n' value for the '_i' type predicates (see Horst's paper)	
-	# TOBYINK - this seems like a poor technique. better to just grep all statements to
-	#           find the highest one?
 	{
 		my $n      = 0;
 		my $maxnum = 0;
@@ -66,6 +67,8 @@ sub __init__
 	$self->{rdfs}    = $rdfs;
 	$self->{error_messages} = [];
 	$self->{options} = {};
+	$self->{dt_handling} = RDF::Closure::DatatypeHandling->new;
+	
 	$self->empty_stored_triples;
 	
 	# TOBYINK: addition
@@ -89,6 +92,11 @@ sub graph
 {
 	my ($self) = @_;
 	return $self->{graph};
+}
+
+sub dt_handling
+{
+	return $_[0]->{dt_handling};
 }
 
 sub add_error
@@ -168,6 +176,31 @@ sub empty_stored_triples
 	return $self;
 }
 
+sub count_stored_triples
+{
+	my ($self, $lim) = @_;
+	$lim = -1 unless $lim;
+	
+	my $count = 0;
+	foreach my $v (values %{$self->{added_triples}})
+	{
+		next unless ref $v;
+		
+		$count++;
+		if ($lim > 0 and $count >= $lim)
+		{
+			return $count;
+		}
+	}
+	
+	if ($lim <= 0)
+	{
+		return $count;
+	}
+	
+	return;
+}
+
 sub flush_stored_triples
 {
 	my ($self) = @_;
@@ -175,35 +208,49 @@ sub flush_stored_triples
 	eval { $self->graph->_store->clear_restrictions; };
 
 	$self->graph->begin_bulk_ops;
-	$self->graph->add_statement($_, $self->{inferred_context})
-		foreach values %{ $self->{added_triples} };
+	$self->graph->add_statement($_, $_->type eq 'QUAD' ? undef : $self->{inferred_context})
+		foreach
+			grep { ref $_ }
+			values %{ $self->{added_triples} };
 	$self->graph->end_bulk_ops;
 	
 	$self->empty_stored_triples;
 }
 
-my $i_know = {};
 sub store_triple
 {
 	my $self = shift;
-	if ($_[0]->isa('RDF::Trine::Statement'))
+	if (substr(ref $_[0], 0, 21) eq 'RDF::Trine::Statement') # horrible, but let's see if it shaves off some time
 	{
 		foreach (@_)
 		{
-			my $sse = $_->sse;
-			next if $i_know->{$sse}++; # cache: seems to speed things up
-			next if defined $self->{added_triples}{$sse};
-			next if $self->graph->count_statements($_->subject, $_->predicate, $_->object);
+			# my own approximation of SSE. benchmarks 7 times faster.
+			my $sse = 	join
+				' || ',
+				map { join q( ), map { defined($_) ? $_ : q() } @$_ }
+				@$_;
+
+			if (defined $self->{added_triples}{$sse})
+			{
+#				printf("SKIP (a): %s\n", $sse) if $self->{_debug};
+				next;
+			}
+			if ($self->graph->count_statements($_->subject, $_->predicate, $_->object))
+			{
+#				printf("SKIP (g): %s\n", $sse) if $self->{_debug};
+				$self->{added_triples}{$sse} = 1;
+				next;
+			}
 			printf("%s\n", $sse) if $self->{_debug};
 			$self->{added_triples}{$sse} = $_;
 		}
+		return;
 	}
 	else
 	{
 		my $st = RDF::Trine::Statement->new(@_);
 		return $self->store_triple($st);
 	}
-	return $self;
 }
 
 {
@@ -219,7 +266,9 @@ sub store_triple
 			$self->add_axioms    if $self->{axioms};
 			$self->add_daxioms   if $self->{daxioms};
 			$self->flush_stored_triples;
-			
+		}
+		
+		{
 			$_->apply_to_closure($self)
 				foreach $self->one_time_rules;
 			
@@ -268,7 +317,7 @@ sub store_triple
 					foreach @OTHER;
 			}
 			
-			$new_cycle = scalar values %{ $self->{added_triples} };
+			$new_cycle = $self->count_stored_triples(1);
 			$self->flush_stored_triples;
 		}
 
@@ -337,7 +386,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 Copyright 2008-2011 Ivan Herman
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -354,6 +403,14 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 
 =cut
 

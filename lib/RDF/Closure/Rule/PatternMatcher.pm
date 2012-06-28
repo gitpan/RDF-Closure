@@ -1,7 +1,8 @@
 package RDF::Closure::Rule::PatternMatcher;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Error qw[:try];
 use RDF::Trine;
@@ -9,7 +10,7 @@ use Scalar::Util qw[blessed];
 
 use base qw[RDF::Closure::Rule::Core];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 sub new
 {
@@ -36,14 +37,25 @@ sub template
 sub apply_to_closure
 {
 	my ($self, $closure) = @_;
-	$self->debug;
+	$self->pre_atc;
 	
-	$closure->graph->get_pattern($self->pattern)->each(sub {
-		my $bound = $self->template->bind_variables($_[0]);
-		$closure->store_triple($_) foreach $bound->triples;
-	});
+	if ($self->pattern->can('match'))
+	{
+		$self->pattern->match($closure->graph)->each(sub {
+			my $bound = $self->template->bind_variables($_[0]);
+			$closure->store_triple($_) foreach grep { !$_->referenced_variables } $bound->triples;
+		});
+	}
+	else
+	{
+		$closure->graph->get_pattern($self->pattern)->each(sub {
+			my $bound = $self->template->bind_variables($_[0]);
+			$closure->store_triple($_) foreach grep { !$_->referenced_variables } $bound->triples;
+		});
+	}
 	
-	$self;
+	$self->post_atc;
 }
 
 1;
+

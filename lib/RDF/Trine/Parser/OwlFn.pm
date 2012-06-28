@@ -1,15 +1,15 @@
 package RDF::Trine::Parser::OwlFn;
 
 use 5.008;
-use common::sense;
-use lib "../../..";
+use strict;
+use utf8;
 
 use Data::UUID;
-use RDF::Trine;
+#use RDF::Trine;
 use RDF::Trine::Namespace qw[RDF RDFS OWL XSD];
 use URI;
 
-use base qw[RDF::Trine::Parser];
+our @ISA = qw[RDF::Trine::Parser];
 
 our ($ParserClass, $VERSION);
 
@@ -20,7 +20,7 @@ use constant ANNOTATION_ANNOTATION => 4;
 
 BEGIN
 {
-	$VERSION = '0.000_03';
+	$VERSION = '0.000_04';
 	
 	# Perl package name
 	my $class = __PACKAGE__;
@@ -268,7 +268,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -285,6 +285,12 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
 

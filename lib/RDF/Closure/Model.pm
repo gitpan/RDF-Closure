@@ -1,19 +1,21 @@
 package RDF::Closure::Model;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Carp qw[carp croak];
 use RDF::Closure::Engine;
-use RDF::Trine;
+#use RDF::Trine;
 use Scalar::Util qw[];
 
-use base qw[RDF::Trine::Model];
+our @ISA = qw[RDF::Trine::Model];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 BEGIN
 {
+	no strict 'refs';
 	my $pkg = __PACKAGE__;
 	foreach my $delegated_method (qw[
 		get_list size etag count_statements get_statements
@@ -69,6 +71,15 @@ sub entailment_regime
 {
 	my ($self) = @_;
 	return $self->_engine->entailment_regime;
+}
+
+sub recalculate
+{
+	my ($self) = @_;
+	$self->{removals} = 0;
+	$self->_engine->reset;
+	$self->_engine->closure;
+	return $self;
 }
 
 sub _engine
@@ -156,6 +167,7 @@ sub remove_statement
 {
 	my ($self, @args) = @_;
 	$self->_egraph->remove_statement(@args);
+	$self->{removals} = 1;
 	$self->_reclose
 		unless $self->{bulkmode};
 }
@@ -164,6 +176,7 @@ sub remove_statements
 {
 	my ($self, @args) = @_;
 	$self->_egraph->remove_statements(@args);
+	$self->{removals} = 1;
 	$self->_reclose
 		unless $self->{bulkmode};
 }
@@ -176,6 +189,22 @@ RDF::Closure::Model - RDF::Trine::Model-compatible inferface
 
 =head1 DESCRIPTION
 
+This module provides a subclass of L<RDF::Trine::Model> allowing you to
+dollop some reasoning into existing RDF::Trine code very easily. While
+L<RDF::Closure::Engine> allows you to infer lots of new statements from an
+existing model, this class also allows you to add and remove statements from
+the reasoned model with new inferences calculated on-the-fly.
+
+Removing a statement is much slower than adding one, though adding a
+statement isn't what you'd call fast. Juditious use of C<begin_bulk_ops> and
+C<end_bulk_ops> is recomnmended.
+
+If a lot of statements have been added and removed from a model since it
+was created, then it's theoretically possible for the inferred data to contain
+statements which are no longer entailed by the explicit data, or for the
+inferred data to be missing some inferences. A C<recalculate> method
+is provided which allows you to re-run the inference from scratch.
+
 =head2 Constructor
 
 =over
@@ -185,7 +214,8 @@ RDF::Closure::Model - RDF::Trine::Model-compatible inferface
 Instantiates a module. $input may be undef, an existing L<RDF::Trine::Model>
 or an L<RDF::Trine::Store>. The input will not be modified.
 
-C<$engine> is the inference engine to use; defaults to 'RDFS'.
+C<$engine> is the inference engine to use; a string suitable for passing to
+C<< RDF::Closure::Engine->new >>; defaults to 'RDFS'.
 
 C<$store> is an L<RDF::Trine::Store> to use to build the inferred model in;
 defaults to a new, temporary store.
@@ -202,6 +232,10 @@ methods it does. It additionally provides:
 =item * C<< entailment_regime >>
 
 Returns a URI string identifying the type of inference in use.
+
+=item * C<< recalculate >>
+
+Drops and re-infers all inferred data.
 
 =back
 
@@ -223,7 +257,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -240,6 +274,13 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
 

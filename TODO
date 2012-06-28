@@ -1,8 +1,6 @@
 TODO:
 
-* Complete OWL2RL support
-* Create an RDFS + OWL2RL engine, or maybe a generic composite engine
-* Create an OWL Extras engine
+* Restricted datatypes (Ivan's RDFClosure/RestrictedDatatype.py)
 
 I don't plan on writing the following myself but would accept patches for:
 

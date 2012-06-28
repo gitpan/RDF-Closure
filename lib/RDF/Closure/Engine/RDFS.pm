@@ -1,7 +1,8 @@
 package RDF::Closure::Engine::RDFS;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Error qw[:try];
 use RDF::Trine qw[statement iri];
@@ -19,7 +20,7 @@ use namespace::clean;
 
 use base qw[RDF::Closure::Engine::Core];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our @OneTimeRules = (
 
@@ -47,7 +48,7 @@ our @OneTimeRules = (
 							my $l1 = $literals{$lit1};
 							my $l2 = $literals{$lit2};
 							
-							if (literals_identical($l1, $l2))
+							if ($cl->dt_handling->literals_identical($l1, $l2))
 							{
 								$cl->graph->get_statements(undef, undef, $l1)->each(sub {
 									$cl->store_triple($_[0]->subject, $_[0]->predicate, $l2);
@@ -63,7 +64,7 @@ our @OneTimeRules = (
 					}
 				}
 			},
-		'rdfs-literal-identity'
+		'x-rdfs-literal-identity'
 		),
 		
 	# rdfs4
@@ -210,7 +211,7 @@ our @Rules = (
 		[undef, $RDF->type, $RDFS->ContainerMembershipProperty],
 		sub {
 				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
-				$cl->store_triple($s, $RDFS->subClassOf, $RDFS->member);
+				$cl->store_triple($s, $RDFS->subPropertyOf, $RDFS->member);
 			},
 		'rdfs12'
 		),
@@ -221,7 +222,8 @@ our @Rules = (
 		sub {
 				my ($cl, $st, $rule) = @_; my ($s, $p, $o) = $st->nodes;
 				$cl->store_triple($s, $RDFS->subClassOf, $RDFS->Literal);
-			}
+			},
+		'x-rdfs-literal-dt'
 		),
 		
 	);
@@ -230,16 +232,16 @@ sub add_axioms
 {
 	my ($self) = @_;
 	
-	$self->graph->add_statement($_, $self->{axiom_context})
+	$self->store_triple(statement($_->nodes, $self->{axiom_context}))
 		foreach @$RDFS_Axiomatic_Triples;
 	
 	for my $i (1 .. $self->{IMaxNum}+1)
 	{
 		my $ci = $RDF->uri(sprintf('_%d', $i));
-		$self->graph->add_statement(statement($ci, $RDF->type, $RDF->Property, $self->{axiom_context}));
-		$self->graph->add_statement(statement($ci, $RDF->type, $RDFS->ContainerMembershipProperty, $self->{axiom_context}));
-		$self->graph->add_statement(statement($ci, $RDFS->domain, $RDFS->Resource, $self->{axiom_context}));
-		$self->graph->add_statement(statement($ci, $RDF->range, $RDFS->Resource, $self->{axiom_context}));
+		$self->store_triple(statement($ci, $RDF->type, $RDF->Property, $self->{axiom_context}));
+		$self->store_triple(statement($ci, $RDF->type, $RDFS->ContainerMembershipProperty, $self->{axiom_context}));
+		$self->store_triple(statement($ci, $RDFS->domain, $RDFS->Resource, $self->{axiom_context}));
+		$self->store_triple(statement($ci, $RDF->range, $RDFS->Resource, $self->{axiom_context}));
 	}
 }
 
@@ -247,7 +249,7 @@ sub add_daxioms
 {
 	my ($self) = @_;
 	
-	$self->graph->add_statement($_, $self->{daxiom_context})
+	$self->store_triple(statement($_->nodes, $self->{daxiom_context}))
 		foreach @$RDFS_D_Axiomatic_Triples;
 	
 	$self->graph->get_statements->each(sub{
@@ -256,10 +258,11 @@ sub add_daxioms
 		{
 			if ($node->is_literal and $node->has_datatype)
 			{
-				$self->graph->add_statement(statement(
+				$self->store_triple(statement(
 					$node,
 					$RDF->type,
 					iri($node->literal_datatype),
+					$self->{daxiom_context}
 					));
 			}
 		}
@@ -301,7 +304,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 Copyright 2008-2011 Ivan Herman
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -318,6 +321,13 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 =cut
 

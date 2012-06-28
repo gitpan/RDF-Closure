@@ -1,7 +1,8 @@
 package RDF::Closure::Engine::OWL2RL;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Error qw[:try];
 use RDF::Trine qw[statement iri];
@@ -31,7 +32,7 @@ use namespace::clean;
 
 use base qw[RDF::Closure::Engine::Core];
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 our @OneTimeRules = (
 
@@ -55,7 +56,7 @@ our @OneTimeRules = (
 				local *_append_to_explicit = sub
 				{
 					my ($s, $o) = map { $_->sse } @_;
-					$explicit->{$s} = []
+					$explicit->{$s} = {}
 						unless exists $explicit->{$s};
 					for my $d (keys %{ $explicit->{$o} })
 					{
@@ -85,22 +86,25 @@ our @OneTimeRules = (
 				};
 				
 				my %literals;
-				$cl->graph->get_statements->each(sub
+				$cl->graph->get_statements(undef, undef, undef)->each(sub
 				{
 					my $st    = shift;
 					my @nodes = $st->nodes;
-					foreach my $lt (@nodes[0..2])
+					foreach my $lt (@nodes)
 					{
 						next unless $lt->is_literal;
 						# We're now effectively in a foreach literal loop...
 						
+						# Add to %literals, but skip rest of this iteration if it was already there.
+						next if $literals{ $lt->sse };
 						$literals{ $lt->sse } = $lt;
 						
 						next unless $lt->has_datatype;
+						$cl->store_triple($lt, $RDF->type, iri($lt->literal_datatype));
+						
 						next unless grep { $_->uri eq $lt->literal_datatype } @$OWL_RL_Datatypes;
 						
 						# RULE dt-type2
-						$cl->store_triple($lt, $RDF->type, iri($lt->literal_datatype));
 						$implicit->{ $lt->sse } = $lt->literal_datatype
 							unless exists $implicit->{ $lt->sse };
 						_add_to_used_datatypes($lt->literal_datatype);
@@ -108,7 +112,7 @@ our @OneTimeRules = (
 						# RULE dt-not-type
 						$cl->add_error("Literal's lexical value and datatype do not match: (%s,%s)",
 							$lt->literal_value, $lt->literal_datatype)
-							unless literal_valid($lt);
+							unless $cl->dt_handling->literal_valid($lt);
 					}
 				});
 				
@@ -123,7 +127,7 @@ our @OneTimeRules = (
 							my $l1 = $literals{$lt1};
 							my $l2 = $literals{$lt2};
 							
-							if (literals_identical($l1, $l2))
+							if ($cl->dt_handling->literals_identical($l1, $l2))
 							{
 								$cl->store_triple($l1, $OWL->sameAs, $l2);
 							}
@@ -134,7 +138,7 @@ our @OneTimeRules = (
 						}
 					}
 				}
-				
+
 				# this next bit catches triples like { [] a xsd:string . }
 				$cl->graph->get_statements(undef, $RDF->type, undef)->each(sub {
 					my $st = shift;
@@ -143,7 +147,7 @@ our @OneTimeRules = (
 					{
 						_add_to_used_datatypes($o);
 						_add_to_explicit($s, $o)
-							unless exists $implicit->{ $s->sse };
+							unless exists $explicit->{ $s->sse };
 					}
 				});
 
@@ -160,18 +164,19 @@ our @OneTimeRules = (
 				}
 				foreach my $dts (values %$explicit)
 				{
-					foreach my $dt (values %$dts)
+					foreach my $dt (keys %$dts)
 					{
-						$cl->store_triple($dt, $RDF->type, $RDFS->Datatype);
+						$cl->store_triple(iri($dt), $RDF->type, $RDFS->Datatype);
 					}
 				}
 				
 				foreach my $r (keys %$explicit)
 				{
-					my @dtypes = values %{ $explicit->{$r} };
+					my @dtypes = keys %{ $explicit->{$r} };
 					$r = RDF::Trine::Node->from_sse($r);
 					foreach my $dt (@dtypes)
 					{
+						$dt = $1 if $dt =~ /^<(.+)>$/;
 						_handle_subsumptions($r, $dt);
 					}
 				}
@@ -675,8 +680,8 @@ our @Rules = (
 							next LOOPJ if $zi->equal($zj); # caught by another rule
 							
 							$cl->add_error("'sameAs' and 'AllDifferent' cannot be used on the same subject-object pair: (%s, %s)", $zi, $zj)
-								if $cl->count_statements($zi, $OWL->sameAs, $zj)
-								|| $cl->count_statements($zj, $OWL->sameAs, $zi);
+								if $cl->graph->count_statements($zi, $OWL->sameAs, $zj)
+								|| $cl->graph->count_statements($zj, $OWL->sameAs, $zi);
 						}
 					}
 				}
@@ -1029,7 +1034,7 @@ our @Rules = (
 								{
 									my $cl2 = $classes[$j];
 									$cl->add_error("Disjoint classes %s and %s have a common individual %s", $cl1, $cl2, $z)
-										if $cl->count_statements($z, $RDF->type, $cl2);
+										if $cl->graph->count_statements($z, $RDF->type, $cl2);
 								}
 							});
 						}
@@ -1210,10 +1215,44 @@ our @Rules = (
 		'scm-hv'
 		),
 		
-	# @@TODO
-	# scm-svf1 and scm-svf2
-	# scm-avf1 and scm-avf2
-	
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->someValuesFrom, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $y) = $st->nodes;
+				$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+					my $pp = shift;
+					$cl->graph->get_statements(undef, $pp, undef)->each(sub{
+						my ($u, undef, $v) = (shift)->nodes;
+						if ($y->equal($OWL->Thing) or $cl->graph->count_statements($v, $RDF->type, $y))
+						{
+							$cl->store_triple($u, $RDF->type, $xx);
+						}
+					});
+				});
+			},
+		'scm-svf1, scm-svf2'
+		),
+		
+	RDF::Closure::Rule::StatementMatcher->new(
+		[undef, $OWL->allValuesFrom, undef],
+		sub {
+				my ($cl, $st, $rule) = @_;
+				my ($xx, undef, $y) = $st->nodes;
+				$cl->graph->objects($xx, $OWL->onProperty)->each(sub{
+					my $pp = shift;
+					$cl->graph->subjects($RDF->type, $xx)->each(sub {
+						my $u = shift;
+						$cl->graph->objects($u, $pp)->each(sub {
+							my $v = shift;
+							$cl->store_triple($v, $RDF->type, $y);
+						});
+					});
+				});
+			},
+		'scm-avf'
+		),
+			
 	# scm-int
 	RDF::Closure::Rule::StatementMatcher->new(
 		[undef, $OWL->intersectionOf, undef],
@@ -1306,18 +1345,20 @@ sub post_process
 sub add_axioms
 {
 	my ($self) = @_;
-	$self->graph->add_statement($_) foreach @$OWLRL_Axiomatic_Triples;
+	$self->store_triple(statement($_->nodes, $self->{axiom_context}))
+		foreach @$OWLRL_Axiomatic_Triples;
 }
 
 sub add_daxioms
 {
 	my ($self) = @_;
-	$self->graph->add_statement($_) foreach @$OWLRL_D_Axiomatic_Triples;
+	$self->store_triple(statement($_->nodes, $self->{daxiom_context}))
+		foreach @$OWLRL_D_Axiomatic_Triples;
 }
 
 sub entailment_regime
 {
-	return 'http://www.w3.org/ns/owl-profile/RL#partial';
+	return 'http://www.w3.org/ns/owl-profile/RL';
 }
 
 1;
@@ -1333,8 +1374,6 @@ RDFClosure/OWLRL.py
 =head1 DESCRIPTION
 
 Performs OWL 2 inference, using the RL profile of OWL.
-
-(This is a preview and only implements a subset of OWL RL.)
 
 =head1 SEE ALSO
 
@@ -1352,7 +1391,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 Copyright 2008-2011 Ivan Herman
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -1369,6 +1408,14 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 
 =cut
 

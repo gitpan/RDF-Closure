@@ -1,7 +1,8 @@
 package RDF::Closure::Engine;
 
 use 5.008;
-use common::sense;
+use strict;
+use utf8;
 
 use Module::Pluggable
 	except      => qw[RDF::Closure::Engine::Core],
@@ -10,12 +11,13 @@ use Module::Pluggable
 	sub_name    => 'engines',	
 	;
 
-our $VERSION = '0.000_03';
+our $VERSION = '0.000_04';
 
 sub new
 {
 	my ($class, $engine, @args) = @_;
-	
+	$engine = 'RDFS' unless defined $engine;
+
 	my ($match) = grep { /^${class}::${engine}$/i } $class->engines;
 	
 	die sprintf("Package %s::%s not found.\n", $class, $engine)
@@ -81,7 +83,7 @@ Returns the L<RDF::Trine::Model> the engine is operating on.
 
 Adds any new triples to the graph that can be inferred.
 
-If C<< $is_subsequent >> is true, then skips "one time rules".
+If C<< $is_subsequent >> is true, then skips axioms.
 
 =item * C<< errors >>
 
@@ -107,7 +109,8 @@ Return a list of engines installed, e.g. 'RDF::Closure::Engine::RDFS'.
 
 L<RDF::Closure>,
 L<RDF::Closure::Engine::RDFS>,
-L<RDF::Closure::Engine::OWL2RL>.
+L<RDF::Closure::Engine::OWL2RL>,
+L<RDF::Closure::Engine::OWL2Plus>.
 
 L<http://www.perlrdf.org/>.
 
@@ -117,7 +120,7 @@ Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright 2011 Toby Inkster
+Copyright 2011-2012 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify it
 under any of the following licences:
@@ -134,6 +137,14 @@ or (at your option) any later version.
 =item * The Clarified Artistic License L<http://www.ncftp.com/ncftp/doc/LICENSE.txt>.
 
 =back
+
+
+=head1 DISCLAIMER OF WARRANTIES
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
 
 =cut
 

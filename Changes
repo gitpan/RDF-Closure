@@ -1,21 +1,26 @@
-############################################################################
-## Changes #################################################################
-############################################################################
-
 RDF-Closure
 ===========
 
 Created:      2011-02-23
-Home page:    <http://search.cpan.org/dist/RDF-Closure/>
+Home page:    <https://metacpan.org/release/RDF-Closure>
 Bug tracker:  <http://rt.cpan.org/Dist/Display.html?Queue=RDF-Closure>
 Maintainer:   Toby Inkster <mailto:tobyink@cpan.org>
 
-0.000_03 [2011-04-06]
+0.000_04  2012-06-27
+
+ - (Addition) OWL2 Plus engine
+ - (Packaging) Module::Package::RDF
+ - Drop dependencies on common::sense and parent.pm.
+
+0.000_03  2011-04-06
+
  - Implemented some more of OWL2 RL.
  - Some small optimisations.
 
-0.000_02 [2011-03-27] # pre-hackathon release
+0.000_02  2011-03-27  # pre-hackathon release
+
  - Implemented some more of OWL2 RL.
 
-0.000_01 [2011-03-14] # pi-day preview
+0.000_01  2011-03-14  # pi-day preview
+
 
