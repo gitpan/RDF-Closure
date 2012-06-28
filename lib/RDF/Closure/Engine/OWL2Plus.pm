@@ -1,5 +1,10 @@
 package RDF::Closure::Engine::OWL2Plus;
 
+BEGIN {
+	$RDF::Closure::Engine::OWL2Plus::AUTHORITY = 'cpan:TOBYINK';
+	$RDF::Closure::Engine::OWL2Plus::VERSION   = '0.001';
+}
+
 use 5.008;
 use strict;
 use utf8;

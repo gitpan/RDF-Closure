@@ -3,6 +3,7 @@ examples/example1.pl
 examples/example2.pl
 examples/example3.pl
 examples/example4.pl
+FAQ
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm

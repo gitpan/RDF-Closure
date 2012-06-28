@@ -1,5 +1,10 @@
 package RDF::Closure::RestrictedDatatype;
 
+BEGIN {
+	$RDF::Closure::RestrictedDatatype::AUTHORITY = 'cpan:TOBYINK';
+	$RDF::Closure::RestrictedDatatype::VERSION   = '0.001';
+}
+
 use 5.008;
 use strict;
 use utf8;

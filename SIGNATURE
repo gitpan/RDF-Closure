@@ -14,10 +14,11 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 4d80f1edbb141535a97c3b31cf6da1231a7d83be Changes
+SHA1 72f937756f1c81559e59d75b3f559244377c7100 Changes
+SHA1 312faf783b79d16d29a70e4b02c7b5275ba626f9 FAQ
 SHA1 4f8f74883c875ac16791b355c07f58294743ab76 LICENSE
-SHA1 a6e38ad8e78aac8e640c6a58f2558ecf63ca0ed9 MANIFEST
-SHA1 18cce51b55cdfef767e889e6a455232a66d8f56c META.yml
+SHA1 3a66056457bda30b3fca2b8bd4aa00ff60fa382c MANIFEST
+SHA1 9efc1ea5f6a65be2d9527d5bf7b8372c6ccba20f META.yml
 SHA1 84366cd3811e570bb1c9e29f2990e5a0dc8601eb Makefile.PL
 SHA1 35f82ffaf7c63a7d429fe0548ee11236dda95674 README
 SHA1 9817bf2199af0d0dcc9fb2de82a275169308afd2 TODO
@@ -45,26 +46,26 @@ SHA1 e31c281782183601e1e057c5914f63269e043932 inc/Scalar/Util.pm
 SHA1 5eae2f71c45a996a296d2445b18d0589307111f0 inc/Scalar/Util/PP.pm
 SHA1 feb933cefe2e3762e8322bd6071a2499f3440da1 inc/YAML/Tiny.pm
 SHA1 8105c0510a773b56840995fb4dd2dc64fe9ddaee inc/unicore/Name.pm
-SHA1 b933fed8d2e795b30c522f2db685f05c99055948 lib/RDF/Closure.pm
-SHA1 270d0fdf1183d0c245b09336e23b0f398da9d1b0 lib/RDF/Closure/AxiomaticTriples.pm
-SHA1 02dc66e9e2f923a97bdd399f6f6ea9d48fc57a66 lib/RDF/Closure/DatatypeHandling.pm
-SHA1 6f99a88525d0215839cf4468b3f40e7a82295caa lib/RDF/Closure/DatatypeTuple.pm
-SHA1 896095800f9944bfe973e65f158fc5ef70c619dc lib/RDF/Closure/Engine.pm
-SHA1 4f87065c7f4555e2b4140cbef1539e15df0208d5 lib/RDF/Closure/Engine/Core.pm
-SHA1 4828862980d5ec2f20d4f98c148fa2afe4ec89be lib/RDF/Closure/Engine/OWL2Plus.pm
-SHA1 b9afeda57fe7e3821b983dfb955ff3084fbd7f54 lib/RDF/Closure/Engine/OWL2RL.pm
-SHA1 58381d4ea1fa791938323648a7f14a07f2cddeb6 lib/RDF/Closure/Engine/RDFS.pm
-SHA1 6fef21edbadbb4d6ace8e00669cb7465293d094a lib/RDF/Closure/Model.pm
-SHA1 4608de9c09c5e7c4799ad9e4feb2783f070f352d lib/RDF/Closure/RestrictedDatatype.pm
-SHA1 06b2583acf383423135b0ea401d0ccdb2bad5de6 lib/RDF/Closure/Rule/Core.pm
-SHA1 578a181093318097646b6e1acd8946eb8d4464df lib/RDF/Closure/Rule/PatternMatcher.pm
-SHA1 102690afd90c752baf0bdd6007d0f72dc70f88c4 lib/RDF/Closure/Rule/Programmatic.pm
-SHA1 73bf0eac29d492c60335ae083db8c435b7cbd1aa lib/RDF/Closure/Rule/StatementMatcher.pm
-SHA1 35f569a4f7fbf7f2694235e1932f5a290aed4abf lib/RDF/Closure/XsdDatatypes.pm
-SHA1 eb2759cc3e1378eb3a87d280f9b0d8fd6ac266e9 lib/RDF/Trine/Parser/OwlFn.pm
+SHA1 e4b486823884918f33e61a7c435c9c9c88684d48 lib/RDF/Closure.pm
+SHA1 36c56cd4123944b6b788a54d4710392a3836a232 lib/RDF/Closure/AxiomaticTriples.pm
+SHA1 7758889f87006e0b675bd7432e480d1eb5b5d1e1 lib/RDF/Closure/DatatypeHandling.pm
+SHA1 02e766a4a9795481bf5e26a22e0e0fa296f715bb lib/RDF/Closure/DatatypeTuple.pm
+SHA1 577722e6971029bdbf2dfb688d1c1255788014ae lib/RDF/Closure/Engine.pm
+SHA1 f7f8a7f07c0d99a6fcd2649d40e4c17f80d83265 lib/RDF/Closure/Engine/Core.pm
+SHA1 1fc0bacd85496ec183ac4e602b4b78fc75be6a46 lib/RDF/Closure/Engine/OWL2Plus.pm
+SHA1 6481f32949a32446b2c8f52a9727a1ab947e05fc lib/RDF/Closure/Engine/OWL2RL.pm
+SHA1 6eba267368ffe4c3f985af144a011e55354bb042 lib/RDF/Closure/Engine/RDFS.pm
+SHA1 8324f970ec8097fe668a486d533a2eb6c658f8e1 lib/RDF/Closure/Model.pm
+SHA1 8b927d6b999717c2aedfc353519110aa5f91ed77 lib/RDF/Closure/RestrictedDatatype.pm
+SHA1 ffb098753cdcbb4ba6fa8df96cefbc1470ae6ac2 lib/RDF/Closure/Rule/Core.pm
+SHA1 195780ab603c049f82c651f919e14df44c25f66b lib/RDF/Closure/Rule/PatternMatcher.pm
+SHA1 02f0b651b70fc4e43b553a67e9fd176ebd9ded05 lib/RDF/Closure/Rule/Programmatic.pm
+SHA1 ded6b2ff5e3ea6496089d2ff28c3b3574f2472cc lib/RDF/Closure/Rule/StatementMatcher.pm
+SHA1 bce1116548e24359943815db6fcc878801d07707 lib/RDF/Closure/XsdDatatypes.pm
+SHA1 1024f87c138b97a787f4a9a4b230b0a5ff24cb2a lib/RDF/Trine/Parser/OwlFn.pm
 SHA1 ff69d76eadb6cb619e7c6114e978b2dfb9fd49df lib/RDF/Trine/Parser/OwlFn/Compiled.pm
-SHA1 3cb2f685dcb3cc0d1ada92ad0a26717db10a53c9 lib/RDF/Trine/Parser/OwlFn/Grammar.pm
-SHA1 6a73bc417cdf04778be6cc271884466835c3920c meta/changes.ttl
+SHA1 ec5236ffa0cd330a0cb0dcfe8b9ad45fafd0f798 lib/RDF/Trine/Parser/OwlFn/Grammar.pm
+SHA1 dafd2bf54541341e5d48fd277c83cdd860c713fe meta/changes.ttl
 SHA1 12a1aa6e02d5d999e7c1bde69ce263770e382fae meta/doap.ttl
 SHA1 d53bd5257ccec809ddf3ffc848aba6e04ae7533d meta/makefile.ttl
 SHA1 6e7a7677f8d4e6bd2bb1765ffc81aa3fbebe2da4 t/01basic.t
@@ -72,7 +73,7 @@ SHA1 bcde620e09301de175de2f5cbe9507d5c19a8cbf t/02reasoning.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iEYEARECAAYFAk/r//IACgkQzr+BKGoqfTnnjwCfdUipMPRdJQcZswY1Dm8ikPaj
-M/8AnjzZOgeKtzyiZHxyLz2NxDexxWQJ
-=NYaX
+iEYEARECAAYFAk/satkACgkQzr+BKGoqfTn01wCfV+b2bbp43aX2DnrE7OAi1E/S
+KvAAn0OwdXd0X3NNNZY10Nn0WFBvZhQJ
+=W2WS
 -----END PGP SIGNATURE-----

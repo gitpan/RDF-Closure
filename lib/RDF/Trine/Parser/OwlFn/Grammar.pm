@@ -2,7 +2,7 @@ package RDF::Trine::Parser::OwlFn::Grammar;
 
 use Parse::RecDescent;
 
-our $VERSION = '0.000_05';
+our $VERSION = '0.001';
 
 exit(__PACKAGE__->main) unless caller;
 

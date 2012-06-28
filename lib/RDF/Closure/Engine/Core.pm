@@ -15,7 +15,7 @@ use constant {
 	FALSE   => 0,
 	};
 
-our $VERSION = '0.000_05';
+our $VERSION = '0.001';
 
 our $debugGlobal = FALSE;
 

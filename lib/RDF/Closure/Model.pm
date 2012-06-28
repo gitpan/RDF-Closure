@@ -11,7 +11,7 @@ use Scalar::Util qw[];
 
 our @ISA = qw[RDF::Trine::Model];
 
-our $VERSION = '0.000_05';
+our $VERSION = '0.001';
 
 BEGIN
 {
